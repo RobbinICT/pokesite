@@ -32,7 +32,7 @@ class PokemonManager
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();
         // Specify the relative path to the CSV file
-        $path = $base_dir . '/var/file1.csv';
+        $path = $base_dir . '/var/card.csv';
 
         // Create a CSV reader instance
         $csv = Reader::createFromPath($path, 'r');
@@ -43,6 +43,7 @@ class PokemonManager
         foreach ($csv as $row) {
             $serie_nr = $this->extractNumericPart($row['SerieNr']);
             $pokemon = new Pokemon((int)$row['Ndex'], $row['Name'], (int)$row['Gen'], $row['Serie'], $serie_nr, $row['ListNr']);
+            $pokemon->setUrl($row['Url']);
             $this->entity_manager->persist($pokemon);
         }
 
@@ -98,7 +99,8 @@ class PokemonManager
 
         // Extract the content of the og:image meta tag
         $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
-        if (!str_contains($image_url, $pokemon->getName()[0])){
+        if (!str_contains($image_url, strtok($pokemon->getCleanName(), ' ')))
+        {
             throw new \Exception(
                 "Invalid set:
                 Serie:{$pokemon->getSerie()}

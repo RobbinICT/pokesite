@@ -25,6 +25,16 @@ class PokemonRepository extends EntityRepository
             ->getResult();
     }
 
+    public function getImageUrls()
+    {
+        return $this->createQueryBuilder('q')
+            ->select('q.url')
+            ->where('q.list = :final')
+            ->setParameter('final', 'F')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getFinalList()
     {
         return $this->createQueryBuilder('q')

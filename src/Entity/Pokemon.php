@@ -33,7 +33,7 @@ class Pokemon
     public string $list;
 
     #[ORM\Column]
-    public string $url;
+    public ?string $url;
 
     public function __construct(int $dex_nr, string $name, int $gen, string $serie, int $serie_nr, string $list)
     {
@@ -58,6 +58,12 @@ class Pokemon
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getCleanName(): string
+    {
+        $pattern = '/[^a-zA-Z\s]/';
+        return preg_replace($pattern, ' ', $this->getName());
     }
 
     public function setName(string $name): void
@@ -134,7 +140,7 @@ class Pokemon
 
     public function generatePokellectorUrl(): ?string
     {
-        if (!str_contains($this->serie, 'Jumbo') && !str_contains($this->serie, 'Trick or Trade 2023'))
+        if (!str_contains($this->list, 'Jumbo') && !str_contains($this->serie, 'Trick or Trade 2023'))
         {
             $base_url = "https://www.pokellector.com/";
             return $base_url . $this->hyphenate($this->serie) . "-Expansion" . "/" . "Card-" . $this->getSerieNrGallery();
@@ -170,12 +176,12 @@ class Pokemon
                 return $replace_string.'-English';
             case 'Scarlet & Violet - Promos':
                 return 'Scarlet-Violet-English-Promos';
-            case '151': // TODO Changed in Excel
-                return 'Scarlet-Violet-151';
             case 'Arceus':
             case 'Rising Rivals':
             case 'Supreme Victors':
                 return 'Platinum-'.$replace_string;
+            case 'Unleashed':
+                return 'HS-'.$replace_string;
             default:
                 return $replace_string;
         }
