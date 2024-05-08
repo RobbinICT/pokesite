@@ -27,8 +27,6 @@ class PokemonManager
 
     public function import()
     {
-        $this->entity_manager->getRepository(Pokemon::class)->clearPokemon();
-
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();
         // Specify the relative path to the CSV file

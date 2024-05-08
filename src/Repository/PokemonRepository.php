@@ -7,6 +7,23 @@ use Doctrine\ORM\EntityRepository;
 class PokemonRepository extends EntityRepository
 {
 
+    public function getPokemonByGen(int $gen, bool $is_final = false)
+    {
+        $qb = $this->createQueryBuilder('q')
+            ->where('q.gen = :gen')
+            ->setParameter('gen', $gen);
+
+        if ($is_final)
+        {
+            $qb->andWhere('q.list = :f_list')
+                ->setParameter('f_list', 'F');
+        }
+
+        return $qb
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getBatchOfPokemonWithoutURL(int $batch_size, bool $just_f = false)
     {
         $q = $this->createQueryBuilder('q')

@@ -27,15 +27,42 @@ class PokemonController extends AbstractController
         $this->kernel = $kernel;
     }
 
-    #[Route(path: '/final', name: 'final')]
+    #[Route(path: '/', name: 'pokemon_list')]
+    public function index(Request $request): Response
+    {
+//        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemonByGen(1, true);
+        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getFinalList();
+        return $this->render('pokemon/index.html.twig',[
+            'pokemon' => $pokemon,
+        ]);
+    }
+
+    #[Route(path: '/get_final_list', name: 'final')]
     public function getFinalList(Request $request): JsonResponse
     {
         $final_list = $this->entity_manager->getRepository(Pokemon::class)->getFinalList();
         return new JsonResponse($final_list);
     }
 
-    #[Route(path: '/import', name: 'import')]
+    #[Route(path: '/database/clean_import', name: 'import_as_new_database', methods: ['POST'])]
     public function importCvsIntoDatabase(Request $request)
+    {
+        try {
+            $this->entity_manager->getRepository(Pokemon::class)->clearPokemon();
+            $this->pokemon_manager->import();
+        } catch (Exception $e) {
+            return new JsonResponse([
+                'message' => $e->getMessage()
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+
+        return new JsonResponse([
+            'message' => 'Imported successfully'
+        ], Response::HTTP_OK);
+    }
+
+    #[Route(path: '/database/add', name: 'add_to_database', methods: ['POST'])]
+    public function addCsvToDatabase(Request $request)
     {
         try {
             $this->pokemon_manager->import();
@@ -50,7 +77,7 @@ class PokemonController extends AbstractController
         ], Response::HTTP_OK);
     }
 
-    #[Route(path: '/image', name: 'image')]
+    #[Route(path: '/add/image_urls', name: 'add_image_urls')]
     public function getImage(Request $request)
     {
         try {
@@ -80,7 +107,7 @@ class PokemonController extends AbstractController
         return new JsonResponse(['count' => count($wrong), 'wrong' => $wrong]);
     }
 
-    #[Route(path: '/download/final', name: 'download_final')]
+    #[Route(path: '/download/final_list', name: 'download_final_list')]
     public function downloadImages(Request $request)
     {
 
