@@ -30,10 +30,14 @@ class PokemonController extends AbstractController
     #[Route(path: '/', name: 'pokemon_list')]
     public function index(Request $request): Response
     {
-//        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemonByGen(1, true);
-        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getFinalList();
+        $search_string = $request->get('search_term');
+        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
         return $this->render('pokemon/index.html.twig',[
+            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+
             'pokemon' => $pokemon,
+
+            'search_string' => $search_string,
         ]);
     }
 

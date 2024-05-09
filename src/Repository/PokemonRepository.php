@@ -7,6 +7,26 @@ use Doctrine\ORM\EntityRepository;
 class PokemonRepository extends EntityRepository
 {
 
+    public function getPokemon(?string $search_term)
+    {
+        $qb = $this->createQueryBuilder('q');
+        if ($search_term) {
+            $qb->where('LOWER(q.name) LIKE LOWER(:search)')
+                ->setParameter('search', '%'.$search_term.'%');
+        }
+
+        if (true)
+        {
+            $qb->andWhere('q.list = :f_list')
+                ->setParameter('f_list', 'F');
+        }
+
+        return $qb
+            ->orderBy('q.dex_nr', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getPokemonByGen(int $gen, bool $is_final = false)
     {
         $qb = $this->createQueryBuilder('q')
