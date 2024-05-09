@@ -6,6 +6,7 @@ use App\Entity\Pokemon;
 use App\Service\PokemonManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,8 +28,38 @@ class PokemonController extends AbstractController
         $this->kernel = $kernel;
     }
 
-    #[Route(path: '/', name: 'pokemon_list')]
+    #[Route(path: '/', name: 'pokemon_index')]
     public function index(Request $request): Response
+    {
+        $search_string = $request->get('search_term');
+        $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string, true);
+        return $this->render('pokemon/index.html.twig',[
+            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+
+            'pokemon' => $pokemon,
+
+            'search_string' => $search_string,
+        ]);
+    }
+
+    #[Route(path: '/show/{id}', name: 'show_pokemon')]
+    public function show_pokemon(
+        #[MapEntity(mapping: ['id' => 'id'])]
+        Pokemon $pokemon
+    ): Response
+    {
+        $show_pokemon = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(
+            ['name' => $pokemon->getName(), 'serie' => $pokemon->getSerie(), 'serie_nr' => $pokemon->getSerieNr()]
+        );
+        return $this->render('pokemon/show.html.twig', [
+            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+
+            'pokemon' => $show_pokemon,
+        ]);
+    }
+
+    #[Route(path: '/all', name: 'show_all_pokemon')]
+    public function showAllPokemon(Request $request): Response
     {
         $search_string = $request->get('search_term');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
@@ -44,7 +75,7 @@ class PokemonController extends AbstractController
     #[Route(path: '/get_final_list', name: 'final')]
     public function getFinalList(Request $request): JsonResponse
     {
-        $final_list = $this->entity_manager->getRepository(Pokemon::class)->getFinalList();
+        $final_list = $this->entity_manager->getRepository(Pokemon::class)->getPokemon(only_show_final_list: true);
         return new JsonResponse($final_list);
     }
 
@@ -117,7 +148,7 @@ class PokemonController extends AbstractController
 
         // TODO add body so changed pokemon can be deleted first and downloaded again
 
-        $finals = $this->entity_manager->getRepository(Pokemon::class)->getFinalList();
+        $finals = $this->entity_manager->getRepository(Pokemon::class)->getPokemon(only_show_final_list: true);
         $path = $this->kernel->getProjectDir() . '/public/images/';
         $failed = [];
 
