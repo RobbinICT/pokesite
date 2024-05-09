@@ -142,19 +142,17 @@ class PokemonController extends AbstractController
         return new JsonResponse(['count' => count($wrong), 'wrong' => $wrong]);
     }
 
-    #[Route(path: '/download/final_list', name: 'download_final_list')]
+    #[Route(path: '/download/images', name: 'download_final_list')]
     public function downloadImages(Request $request)
     {
-
-        // TODO add body so changed pokemon can be deleted first and downloaded again
-
-        $finals = $this->entity_manager->getRepository(Pokemon::class)->getPokemon(only_show_final_list: true);
-        $path = $this->kernel->getProjectDir() . '/public/images/';
+        $pokemon_list = $this->entity_manager->getRepository(Pokemon::class)->getPokemon();
+        $path = $this->kernel->getProjectDir() . '/public/images/pokemon/';
         $failed = [];
+        $new_images = 0;
 
         /** @var Pokemon $pokemon */
-        foreach ($finals as $pokemon) {
-            $filename = $pokemon->getName() . '.png';
+        foreach ($pokemon_list as $pokemon) {
+            $filename = $pokemon->getUniqueIdentifier() . '.png';
 
             // Check if the file already exists
             if (file_exists($path . $filename)) {
@@ -173,12 +171,13 @@ class PokemonController extends AbstractController
                 continue;
             }
             file_put_contents($path . $filename, $image_content);
+            $new_images++;
         }
 
         if (\count($failed) > 0)
         {
             return new JsonResponse(['Count' => \count($failed), 'Pokemon' => $failed]);
         }
-        return new JsonResponse("All images downloaded");
+        return new JsonResponse("$new_images new images downloaded");
     }
 }
