@@ -16,6 +16,49 @@
         <a href="/" class="flex items-center justify-center">
             <span class="text-3xl font-bold underline">Robbin's Personal Pokesite</span>
         </a>
+
+        <div class="flex items-center justify-center">
+            <a href="{{ path('pokemon_index') }}">
+                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                    Final list
+                </button>
+            </a>
+
+            <a href="{{ path('show_all_pokemon') }}">
+                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                    Complete list
+                </button>
+            </a>
+        </div>
+
+        {% if super_admin == 'true' %}
+            <div class="flex items-center justify-center">
+                <a href="{{ path('import_as_new_database') }}">
+                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        Clean import
+                    </button>
+                </a>
+
+                <a href="{{ path('add_to_database') }}">
+                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        Add to database
+                    </button>
+                </a>
+
+                <a href="{{ path('add_image_urls') }}">
+                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        Add missing URLs
+                    </button>
+                </a>
+
+                <a href="{{ path('download_images') }}">
+                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
+                        Download missing images
+                    </button>
+                </a>
+            </div>
+        {% endif %}
+
     </head>
     <body>
         {% block body %}{% endblock %}

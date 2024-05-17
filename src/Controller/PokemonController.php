@@ -34,7 +34,8 @@ class PokemonController extends AbstractController
         $search_string = $request->get('search_term');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string, true);
         return $this->render('pokemon/index.html.twig',[
-            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
+            'super_admin' => $_ENV['SUPER_ADMIN'] ?? false,
 
             'pokemon' => $pokemon,
 
@@ -52,7 +53,7 @@ class PokemonController extends AbstractController
             ['name' => $pokemon->getName(), 'serie' => $pokemon->getSerie(), 'serie_nr' => $pokemon->getSerieNr()]
         );
         return $this->render('pokemon/show.html.twig', [
-            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
 
             'pokemon' => $show_pokemon,
         ]);
@@ -64,7 +65,8 @@ class PokemonController extends AbstractController
         $search_string = $request->get('search_term');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
         return $this->render('pokemon/index.html.twig',[
-            'local_cards' => $_ENV['USE_LOCAL_CARD'],
+            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
+            'super_admin' => $_ENV['SUPER_ADMIN'] ?? false,
 
             'pokemon' => $pokemon,
 
@@ -79,7 +81,7 @@ class PokemonController extends AbstractController
         return new JsonResponse($final_list);
     }
 
-    #[Route(path: '/database/clean_import', name: 'import_as_new_database', methods: ['POST'])]
+    #[Route(path: '/database/clean_import', name: 'import_as_new_database')]
     public function importCvsIntoDatabase(Request $request)
     {
         try {
@@ -96,7 +98,7 @@ class PokemonController extends AbstractController
         ], Response::HTTP_OK);
     }
 
-    #[Route(path: '/database/add', name: 'add_to_database', methods: ['POST'])]
+    #[Route(path: '/database/add', name: 'add_to_database')]
     public function addCsvToDatabase(Request $request)
     {
         try {
@@ -142,7 +144,7 @@ class PokemonController extends AbstractController
         return new JsonResponse(['count' => count($wrong), 'wrong' => $wrong]);
     }
 
-    #[Route(path: '/download/images', name: 'download_final_list')]
+    #[Route(path: '/download/images', name: 'download_images')]
     public function downloadImages(Request $request)
     {
         $pokemon_list = $this->entity_manager->getRepository(Pokemon::class)->getPokemon();
