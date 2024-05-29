@@ -25,6 +25,18 @@ class PokemonManager
         $this->entity_manager = $entity_manger;
     }
 
+    public static function getScarletVioletMainSeries()
+    {
+        return [
+            'Scarlet & Violet',
+            'Paldea Evolved',
+            'Obsidian Flames',
+            'Paradox Rift',
+            'Temporal Forces',
+            'Twilight Masquerade'
+        ];
+    }
+
     public function import()
     {
         // Get the base directory of your Symfony project
@@ -77,25 +89,15 @@ class PokemonManager
         ], Response::HTTP_OK);
     }
 
-    private function setImageHostingUrl(Pokemon $pokemon)
+    public function setImageHostingUrl(Pokemon $pokemon)
     {
-        // Initialize the HTTP client
-        $client = HttpClient::create();
-
-        // Make a GET request to fetch the image
         $url = $pokemon->generatePokellectorUrl();
         if (!$url)
         {
             return false;
         }
-        $this->logger->info($pokemon->getName().$pokemon->getSerie().$pokemon->getSerieNr());
-        $response = $client->request('GET', $url);
-        $content = $response->getContent();
 
-        // Create a new crawler instance and load the HTML content
-        $crawler = new Crawler($content);
-
-        // Extract the content of the og:image meta tag
+        $crawler = $this->getCrawler($pokemon, $url);
         $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
         if (!str_contains($image_url, strtok($pokemon->getCleanName(), ' ')))
         {
@@ -111,8 +113,77 @@ class PokemonManager
         $this->entity_manager->persist($pokemon);
     }
 
+    public function getFullTitle(Pokemon $pokemon): ?string
+    {
+        $url = $pokemon->generatePokellectorUrl();
+        if (!$url)
+        {
+            return null;
+        }
+        $crawler = $this->getCrawler($pokemon, $url);
+        $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
+        return $title;
+    }
+
+    public function getCrawler(Pokemon $pokemon, $url)
+    {
+        $client = HttpClient::create();
+        $this->logger->info($pokemon->getName().$pokemon->getSerie().$pokemon->getSerieNr());
+        $response = $client->request('GET', $url);
+        $content = $response->getContent();
+        return new Crawler($content);
+    }
+
+    public function printMissingPokemon()
+    {
+        $count = 0;
+        $missing = [];
+        foreach (self::getScarletVioletMainSeries() as $serie_name)
+        {
+            $missing_in_serie = $this->checkForMissingPokemonInSerie($serie_name);
+
+            // TODO convert serie_nr to Pokemon and use getFullTitle
+
+            if (!empty($missing_in_serie))
+            {
+                $missing['(' . \count($missing_in_serie) . ')' .$serie_name] = $missing_in_serie;
+                $count += \count($missing_in_serie);
+            }
+        }
+
+        return [$missing, $count];
+    }
+
+    public function checkForMissingPokemonInSerie(string $serie_name): array
+    {
+        $my_numbers = array_column($this->entity_manager->getRepository(Pokemon::class)->getPokemonSerieNumbersBySerie($serie_name), 'serie_nr');
+        $limit = self::getLimitOfSerie($serie_name);
+        $all_numbers = range(1, $limit);
+        $missing_numbers = array_diff($all_numbers, $my_numbers);
+        return array_splice($missing_numbers, 0);
+    }
+
     private function extractNumericPart(string $value)
     {
         return (int)preg_replace('/[^0-9]/', '', $value);
+    }
+
+    public static function getLimitOfSerie(string $serie_name)
+    {
+        switch ($serie_name)
+        {
+            case 'Scarlet & Violet':
+                return 165;
+            case 'Paldea Evolved':
+                return 170;
+            case 'Obsidian Flames':
+                return 185;
+            case 'Paradox Rift':
+                return 158;
+            case 'Temporal Forces':
+                return 139;
+            case 'Twilight Masquerade':
+                return 140;
+        }
     }
 }

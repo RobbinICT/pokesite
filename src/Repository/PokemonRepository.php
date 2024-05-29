@@ -28,6 +28,27 @@ class PokemonRepository extends EntityRepository
             ->getResult();
     }
 
+    public function getPokemonSerieNumbersBySerie(string $serie_name): array
+    {
+        return $this->createQueryBuilder('q')
+            ->select('q.serie_nr')
+            ->where('q.serie = :serie_name')
+            ->setParameter('serie_name', $serie_name)
+            ->orderBy('q.dex_nr', 'ASC')
+            ->getQuery()
+            ->getScalarResult();
+    }
+
+    public function getPokemonBySerie(string $serie_name)
+    {
+        return $this->createQueryBuilder('q')
+            ->where('q.serie = :serie_name')
+            ->setParameter('serie_name', $serie_name)
+            ->orderBy('q.dex_nr', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
     public function getBatchOfPokemonWithoutURL(int $batch_size, bool $just_f = false)
     {
         $q = $this->createQueryBuilder('q')

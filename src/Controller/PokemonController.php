@@ -28,6 +28,22 @@ class PokemonController extends AbstractController
         $this->kernel = $kernel;
     }
 
+    #[Route(path: '/test', name: 'test')]
+    public function test(Request $request)
+    {
+        try {
+            $pikachu = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(['name' => 'Pikachu']);
+            $this->pokemon_manager->getFullTitle($pikachu);
+            return new JsonResponse([
+                'message' => "Added image urls successfully"
+            ], Response::HTTP_OK);
+        } catch (Exception $e) {
+            return new JsonResponse([
+                'message' => "{$e->getMessage()}"
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
+    }
+
     #[Route(path: '/', name: 'pokemon_index')]
     public function index(Request $request): Response
     {
@@ -129,21 +145,6 @@ class PokemonController extends AbstractController
         }
     }
 
-    #[Route(path: '/validate/url', name: 'validate')]
-    public function validate(Request $request)
-    {
-        $all = $this->entity_manager->getRepository(Pokemon::class)->findAll();
-        $wrong = [];
-        foreach ($all as $pokemon) {
-            if ($pokemon->getUrl() !== 'TODO') {
-                if (!str_contains($pokemon->getUrl(), strtok($pokemon->getCleanName(), ' '))) {
-                    $wrong[$pokemon->getUrl()] = $pokemon->getCleanName();
-                }
-            }
-        }
-        return new JsonResponse(['count' => count($wrong), 'wrong' => $wrong]);
-    }
-
     #[Route(path: '/download/images', name: 'download_images')]
     public function downloadImages(Request $request)
     {
@@ -181,5 +182,21 @@ class PokemonController extends AbstractController
             return new JsonResponse(['Count' => \count($failed), 'Pokemon' => $failed]);
         }
         return new JsonResponse("$new_images new images downloaded");
+    }
+
+    #[Route(path: '/missing', name: 'print_missing_serie_numbers')]
+    public function getMissing(Request $request)
+    {
+        try {
+            $missing = $this->pokemon_manager->printMissingPokemon();
+            return new JsonResponse([
+                'total'   => $missing[1],
+                'missing' => $missing[0],
+            ], Response::HTTP_OK);
+        } catch (Exception $e) {
+            return new JsonResponse([
+                'message' => "{$e->getMessage()}"
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 }
