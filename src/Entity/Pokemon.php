@@ -96,20 +96,20 @@ class Pokemon
         $this->serie = $serie;
     }
 
-    public function getSerieNrGallery(): string
+    public static function getSerieNrGallery(string $serie, string $serie_nr): string
     {
-        if(str_contains($this->serie, 'Gallery'))
+        if(str_contains($serie, 'Gallery'))
         {
-            if (str_contains($this->serie, 'Crown Zenith'))
+            if (str_contains($serie, 'Crown Zenith'))
             {
-                return 'GG'.$this->serie_nr;
+                return 'GG'.$serie_nr;
             }
-            elseif (str_contains($this->serie, 'Silver Tempest') || str_contains($this->serie, 'Lost Origin') || str_contains($this->serie, 'Astral Radiance'))
+            elseif (str_contains($serie, 'Silver Tempest') || str_contains($serie, 'Lost Origin') || str_contains($serie, 'Astral Radiance'))
             {
-                return 'TG'.$this->serie_nr;
+                return 'TG'.$serie_nr;
             }
         }
-        return $this->serie_nr;
+        return $serie_nr;
     }
 
     public function getSerieNr(): int
@@ -148,12 +148,12 @@ class Pokemon
         if (!str_contains($this->list, 'Jumbo') && !str_contains($this->serie, 'Trick or Trade 2023'))
         {
             $base_url = "https://www.pokellector.com/";
-            return $base_url . $this->hyphenate($this->serie) . "-Expansion" . "/" . "Card-" . $this->getSerieNrGallery();
+            return $base_url . self::hyphenate($this->serie) . "-Expansion" . "/" . "Card-" . self::getSerieNrGallery($this->serie, $this->serie_nr);
         }
         return null;
     }
 
-    private function hyphenate(string $string): string
+    public static function hyphenate(string $string): string
     {
         // Define a regular expression pattern to match special characters and spaces
         $pattern = '/[^a-zA-Z0-9\s]/';
@@ -163,10 +163,10 @@ class Pokemon
         $space_string = str_replace('  ', ' ', $clean_string);
         $replaced_string = str_replace(' ', '-', $space_string);
 
-        return $this->convertSerieToPokellectorSerieUrl($string, $replaced_string);
+        return self::convertSerieToPokellectorSerieUrl($string, $replaced_string);
     }
 
-    private function convertSerieToPokellectorSerieUrl(string $serie, string $replace_string)
+    public static function convertSerieToPokellectorSerieUrl(string $serie, string $replace_string)
     {
         switch ($serie)
         {

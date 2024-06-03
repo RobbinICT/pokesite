@@ -97,7 +97,7 @@ class PokemonManager
             return false;
         }
 
-        $crawler = $this->getCrawler($pokemon, $url);
+        $crawler = $this->getCrawler($url);
         $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
         if (!str_contains($image_url, strtok($pokemon->getCleanName(), ' ')))
         {
@@ -120,15 +120,15 @@ class PokemonManager
         {
             return null;
         }
-        $crawler = $this->getCrawler($pokemon, $url);
+        $crawler = $this->getCrawler($url);
         $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
         return $title;
     }
 
-    public function getCrawler(Pokemon $pokemon, $url)
+    public function getCrawler($url)
     {
+        $this->logger->info($url);
         $client = HttpClient::create();
-        $this->logger->info($pokemon->getName().$pokemon->getSerie().$pokemon->getSerieNr());
         $response = $client->request('GET', $url);
         $content = $response->getContent();
         return new Crawler($content);
@@ -142,11 +142,17 @@ class PokemonManager
         {
             $missing_in_serie = $this->checkForMissingPokemonInSerie($serie_name);
 
-            // TODO convert serie_nr to Pokemon and use getFullTitle
-
             if (!empty($missing_in_serie))
             {
-                $missing['(' . \count($missing_in_serie) . ')' .$serie_name] = $missing_in_serie;
+                foreach ($missing_in_serie as $serie_nr)
+                {
+                    $base_url = "https://www.pokellector.com/";
+                    $url = $base_url . Pokemon::hyphenate($serie_name) . "-Expansion" . "/" . "Card-" . Pokemon::getSerieNrGallery($serie_name, $serie_nr);
+                    $crawler = $this->getCrawler($url);
+                    $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
+                    $missing[$serie_name][] = $title;
+                }
+
                 $count += \count($missing_in_serie);
             }
         }
