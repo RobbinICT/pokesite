@@ -24,7 +24,7 @@ class MissingPokemonController extends AbstractController
     #[Route(path: '/missing', name: 'show_missing_pokemon')]
     public function index(Request $request): Response
     {
-        $search_string = $request->get('search_term');
+        $search_string = $request->get('q');
         $exclude_paradox_rift = ConfigManager::getExcludeParadoxRiftEnvironmentVariable();
         $missing_pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAllMissingPokemon($search_string, $exclude_paradox_rift);
         $total = \count($missing_pokemon_list);

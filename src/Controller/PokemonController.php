@@ -45,7 +45,7 @@ class PokemonController extends AbstractController
     #[Route(path: '/', name: 'show_final_pokemon')]
     public function index(Request $request): Response
     {
-        $search_string = $request->get('search_term');
+        $search_string = $request->get('q');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string, true);
         return $this->render('pokemon/index.html.twig',[
             ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
@@ -61,7 +61,7 @@ class PokemonController extends AbstractController
     #[Route(path: '/all', name: 'show_all_pokemon')]
     public function showAllPokemon(Request $request): Response
     {
-        $search_string = $request->get('search_term');
+        $search_string = $request->get('q');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
         return $this->render('pokemon/index.html.twig',[
             ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
