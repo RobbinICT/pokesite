@@ -14,9 +14,7 @@
             {% block importmap %}{{ importmap('app') }}{% endblock %}
         {% endblock %}
 
-        <a href="{{ path('show_final_pokemon') }}" class="flex items-center justify-center">
-            <span class="text-3xl font-bold underline">Robbin's Personal Pokesite</span>
-        </a>
+        <h1 class="flex items-center justify-center mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Robbin's Personal Pokesite</h1>
 
         <div class="flex items-center justify-center">
             <a href="{{ path('show_final_pokemon') }}">
@@ -44,7 +42,7 @@
             </a>
         </div>
 
-        {% if constant('App\\Service\\ConfigManager::ENV_VAR_SUPER_ADMIN') == 'true' %}
+        {% if SUPER_ADMIN == 'true' %}
             <div class="flex items-center justify-center">
                 <a href="{{ path('import_as_new_database') }}">
                     <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">

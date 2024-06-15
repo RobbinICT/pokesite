@@ -25,4 +25,22 @@ return [
     '@hotwired/turbo' => [
         'version' => '7.3.0',
     ],
+    'flowbite/plugin' => [
+        'version' => '2.3.0',
+    ],
+    'mini-svg-data-uri' => [
+        'version' => '1.4.4',
+    ],
+    'tailwindcss/plugin' => [
+        'version' => '3.4.1',
+    ],
+    'tailwindcss/defaultTheme' => [
+        'version' => '3.4.1',
+    ],
+    'tailwindcss/colors' => [
+        'version' => '3.4.1',
+    ],
+    'picocolors' => [
+        'version' => '1.0.0',
+    ],
 ];
