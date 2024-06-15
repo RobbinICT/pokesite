@@ -102,11 +102,11 @@ class PokemonManager
         if (!str_contains($image_url, strtok($pokemon->getCleanName(), ' ')))
         {
             throw new \Exception(
-                "Invalid set:
-                Serie:{$pokemon->getSerie()}
-                Pokemon: {$pokemon->getName()}
-                Pokellector: $url
-                Image: $image_url"
+                "Invalid:\n " .
+                "Serie:{$pokemon->getSerie()}\n ({$pokemon->getSerieNr()})" .
+                "Pokemon: {$pokemon->getName()}\n " .
+                "Pokellector: $url\n " .
+                "Image: $image_url"
             );
         }
         $pokemon->setUrl($image_url);

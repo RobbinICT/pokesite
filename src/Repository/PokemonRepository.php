@@ -52,7 +52,8 @@ class PokemonRepository extends EntityRepository
     public function getBatchOfPokemonWithoutURL(int $batch_size, bool $just_f = false)
     {
         $q = $this->createQueryBuilder('q')
-            ->where('q.url IS NULL')
+            ->where('q.url IS NULL or q.url = :empty_string')
+            ->setParameter('empty_string', '')
             ->andWhere('q.list != :jumbo')
             ->setParameter('jumbo', 'Jumbo');
 
