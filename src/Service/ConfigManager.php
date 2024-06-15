@@ -22,4 +22,9 @@ class ConfigManager
     {
         return filter_var($_ENV['EXCLUDE_PARADOX_RIFT'], FILTER_VALIDATE_BOOLEAN) ?? false;
     }
+
+    public static function getAlphabeticalOrderForUniqueMissingPokemonEnvironmentVariable()
+    {
+        return filter_var($_ENV['ALPHABETICAL_ORDER'], FILTER_VALIDATE_BOOLEAN) ?? false;
+    }
 }
