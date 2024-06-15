@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Pokemon;
+use App\Service\ConfigManager;
 use App\Service\PokemonManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
@@ -47,29 +48,13 @@ class PokemonController extends AbstractController
         $search_string = $request->get('search_term');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string, true);
         return $this->render('pokemon/index.html.twig',[
-            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
-            'super_admin' => $_ENV['SUPER_ADMIN'] ?? false,
+            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
+            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
+
 
             'pokemon' => $pokemon,
 
             'search_string' => $search_string,
-        ]);
-    }
-
-    #[Route(path: '/show/{id}', name: 'show_pokemon')]
-    public function show_pokemon(
-        #[MapEntity(mapping: ['id' => 'id'])]
-        Pokemon $pokemon
-    ): Response
-    {
-        $show_pokemon = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(
-            ['name' => $pokemon->getName(), 'serie' => $pokemon->getSerie(), 'serie_nr' => $pokemon->getSerieNr()]
-        );
-        return $this->render('pokemon/show.html.twig', [
-            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
-            'super_admin' => $_ENV['SUPER_ADMIN'] ?? false,
-
-            'pokemon' => $show_pokemon,
         ]);
     }
 
@@ -79,8 +64,8 @@ class PokemonController extends AbstractController
         $search_string = $request->get('search_term');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
         return $this->render('pokemon/index.html.twig',[
-            'local_cards' => $_ENV['USE_LOCAL_CARD'] ?? true,
-            'super_admin' => $_ENV['SUPER_ADMIN'] ?? false,
+            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
+            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
 
             'pokemon' => $pokemon,
 
@@ -88,7 +73,25 @@ class PokemonController extends AbstractController
         ]);
     }
 
-    #[Route(path: '/missing', name: 'print_missing_serie_numbers')]
+    #[Route(path: '/show/{id}', name: 'show_single_pokemon')]
+    public function showSinglePokemon(
+        #[MapEntity(mapping: ['id' => 'id'])]
+        Pokemon $pokemon
+    ): Response
+    {
+        $show_pokemon = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(
+            ['name' => $pokemon->getName(), 'serie' => $pokemon->getSerie(), 'serie_nr' => $pokemon->getSerieNr()]
+        );
+        return $this->render('pokemon/show.html.twig', [
+            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
+            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
+
+
+            'pokemon' => $show_pokemon,
+        ]);
+    }
+
+    #[Route(path: '/print-missing', name: 'print_missing_serie_numbers')]
     public function getMissing(Request $request)
     {
         try {

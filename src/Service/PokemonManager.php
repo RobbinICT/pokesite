@@ -18,6 +18,13 @@ class PokemonManager
     private KernelInterface $kernel;
     private EntityManagerInterface $entity_manager;
 
+    public const SERIE_SV_SCARLET_VIOLET = 'Scarlet & Violet';
+    public const SERIE_SV_PALDEA_EVOLVED = 'Paldea Evolved';
+    public const SERIE_SV_OBSIDIAN_FLAMES = 'Obsidian Flames';
+    public const SERIE_SV_PARADOX_RIFT = 'Paradox Rift';
+    public const SERIE_SV_TEMPORAL_FORCES = 'Temporal Forces';
+    public const SERIE_SV_TWILIGHT_MASQUERADE = 'Twilight Masquerade';
+
     public function __construct(LoggerInterface $logger, KernelInterface $kernel, EntityManagerInterface $entity_manger)
     {
         $this->logger = $logger;
@@ -28,12 +35,12 @@ class PokemonManager
     public static function getScarletVioletMainSeries()
     {
         return [
-            'Scarlet & Violet',
-            'Paldea Evolved',
-            'Obsidian Flames',
-            'Paradox Rift',
-            'Temporal Forces',
-            'Twilight Masquerade'
+            PokemonManager::SERIE_SV_SCARLET_VIOLET,
+            PokemonManager::SERIE_SV_PALDEA_EVOLVED,
+            PokemonManager::SERIE_SV_OBSIDIAN_FLAMES,
+            PokemonManager::SERIE_SV_PARADOX_RIFT,
+            PokemonManager::SERIE_SV_TEMPORAL_FORCES,
+            PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE
         ];
     }
 

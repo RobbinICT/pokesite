@@ -4,20 +4,18 @@
     <div class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
         {% if constant('App\\Service\\ConfigManager::ENV_VAR_USE_LOCAL_CARDS') == 'true' %}
             <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                 src="/images/pokemon/{{ pokemon.getUniqueIdentifier }}.png" alt="{{ pokemon.name }}"
+                 src="/images/pokemon/{{ pokemon.title|url_encode }}.png" alt="{{ pokemon.title }}"
                  onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
         {% else %}
             <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                 src="{{ pokemon.url }}" alt="{{ pokemon.name }}"
+                 src="{{ pokemon.url }}" alt="{{ pokemon.title }}"
                  onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
         {% endif %}
 
         <div>
             <div class="flex flex-col justify-between p-4 leading-normal">
-                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon.name }}</h5>
+                <h5 class="mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon.title }}</h5>
             </div>
-            <p class="font-normal text-gray-700 dark:text-gray-400">Serie: {{ pokemon.serie }}</p>
-            <p class="font-normal text-gray-700 dark:text-gray-400">Serie number: {{ pokemon.serie_nr }}</p>
         </div>
     </div>
 {% endblock %}

@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\MissingPokemon;
 use App\Entity\Pokemon;
 use App\Service\PokemonManager;
 use Doctrine\ORM\EntityManagerInterface;
@@ -66,6 +67,47 @@ class ImageController extends AbstractController
             $image_content = file_get_contents($url);
             if ($image_content === false) {
                 $failed[] = $pokemon->getName();
+                continue;
+            }
+            file_put_contents($path . $filename, $image_content);
+            $new_images++;
+        }
+
+        if (\count($failed) > 0)
+        {
+            return new JsonResponse(['Count' => \count($failed), 'Pokemon' => $failed]);
+        }
+        return new JsonResponse([
+            'message' => "$new_images new images downloaded"
+        ], Response::HTTP_OK);
+    }
+
+    #[Route(path: '/images/download/missing-pokemon', name: 'download_images_missing_pokemon')]
+    public function downloadImagesMissingPokemon(Request $request)
+    {
+        $pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAll();
+        $path = $this->kernel->getProjectDir() . '/public/images/missing-pokemon/';
+        $failed = [];
+        $new_images = 0;
+
+        /** @var MissingPokemon $pokemon */
+        foreach ($pokemon_list as $pokemon) {
+            $filename = $pokemon->getTitle() . '.png';
+
+            // Check if the file already exists
+            if (file_exists($path . $filename)) {
+                continue;
+            }
+
+            $url = $pokemon->getUrl();
+
+            if (!filter_var($url, FILTER_VALIDATE_URL)) {
+                continue;
+            }
+
+            $image_content = file_get_contents($url);
+            if ($image_content === false) {
+                $failed[] = $pokemon->getTitle();
                 continue;
             }
             file_put_contents($path . $filename, $image_content);
