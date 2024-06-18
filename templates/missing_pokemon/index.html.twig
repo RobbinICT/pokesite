@@ -17,12 +17,12 @@
                         <a href="{{ path('show_single_missing_pokemon', {'id': pokemon.id}) }}"
                            class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
                             {% if USE_LOCAL_CARDS == 'true' %}
-                                <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                                     src="/images/missing-pokemon/{{ pokemon.getTitle()|url_encode }}.png" alt="{{ pokemon.title }}"
+                                <img class="lazy object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                                     data-src="/images/missing-pokemon/{{ pokemon.getTitle()|url_encode }}.png" alt="{{ pokemon.title }}"
                                      onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
                             {% else %}
-                                <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                                     src="{{ pokemon.url }}" alt="{{ pokemon.title }}"
+                                <img class="lazy object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                                     data-src="{{ pokemon.url }}" alt="{{ pokemon.title }}"
                                      onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
                             {% endif %}
                             <div>
@@ -38,4 +38,9 @@
     </div>
 
 
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% embed 'lazy_loading_js.html.twig' %}{% endembed %}
 {% endblock %}

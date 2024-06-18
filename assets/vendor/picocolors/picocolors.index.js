@@ -1,0 +1,7 @@
+/**
+ * Bundled by jsDelivr using Rollup v2.79.1 and Terser v5.19.2.
+ * Original file: /npm/picocolors@1.0.0/picocolors.browser.js
+ *
+ * Do NOT use SRI with dynamically generated files! More information: https://www.jsdelivr.com/using-sri-with-dynamic-files
+ */
+var e={exports:{}},r=String,t=function(){return{isColorSupported:!1,reset:r,bold:r,dim:r,italic:r,underline:r,inverse:r,hidden:r,strikethrough:r,black:r,red:r,green:r,yellow:r,blue:r,magenta:r,cyan:r,white:r,gray:r,bgBlack:r,bgRed:r,bgGreen:r,bgYellow:r,bgBlue:r,bgMagenta:r,bgCyan:r,bgWhite:r}};e.exports=t();var o=e.exports.createColors=t,s=e.exports,p=e.exports.bgBlack,x=e.exports.bgBlue,g=e.exports.bgCyan,l=e.exports.bgGreen,a=e.exports.bgMagenta,n=e.exports.bgRed,b=e.exports.bgWhite,i=e.exports.bgYellow,d=e.exports.black,u=e.exports.blue,c=e.exports.bold,h=e.exports.cyan,y=e.exports.dim,k=e.exports.gray,w=e.exports.green,C=e.exports.hidden,m=e.exports.inverse,v=e.exports.isColorSupported,B=e.exports.italic,S=e.exports.magenta,f=e.exports.red,G=e.exports.reset,M=e.exports.strikethrough,R=e.exports.underline,W=e.exports.white,Y=e.exports.yellow;export{p as bgBlack,x as bgBlue,g as bgCyan,l as bgGreen,a as bgMagenta,n as bgRed,b as bgWhite,i as bgYellow,d as black,u as blue,c as bold,o as createColors,h as cyan,s as default,y as dim,k as gray,w as green,C as hidden,m as inverse,v as isColorSupported,B as italic,S as magenta,f as red,G as reset,M as strikethrough,R as underline,W as white,Y as yellow};
