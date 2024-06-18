@@ -26,4 +26,12 @@ class MissingPokemonRepository  extends EntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    public function getIncompleteSeries(): array
+    {
+        return $this->createQueryBuilder('q')
+            ->select('q.serie')
+            ->distinct()
+            ->getQuery()->getArrayResult();
+    }
 }

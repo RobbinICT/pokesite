@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Entity\MissingPokemon;
 use App\Entity\MissingUniquePokemon;
+use App\Entity\Pokemon;
 use App\Service\ConfigManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -65,6 +67,40 @@ class MissingPokemonController extends AbstractController
 
             'pokemon' => $show_pokemon,
         ]);
+    }
+
+    #[Route(path: '/missing/update', name: 'update_missing')]
+    public function updateMissingPokemon(Request $request)
+    {
+        try {
+            $series = $this->entity_manager->getRepository(MissingPokemon::class)->getIncompleteSeries();
+            $deleted = [];
+            foreach ($series as $serie)
+            {
+                $missing_pokemon = $this->entity_manager->getRepository(MissingPokemon::class)->findBy(['serie' => $serie['serie']]);
+                foreach ($missing_pokemon as $pokemon)
+                {
+                    if ($this->entity_manager->getRepository(Pokemon::class)->findOneBy(['serie' => $serie['serie'], 'serie_nr' => $pokemon->getSerieNr()]))
+                    {
+                        $deleted[$serie['serie']][] = $pokemon->getTitle();
+                        $this->entity_manager->remove($pokemon);
+                    }
+                }
+
+                $this->entity_manager->flush();
+            }
+            if(\count($deleted) === 0)
+            {
+                $deleted = ['message' => 'No missing pokemon found'];
+            }
+            return new JsonResponse($deleted, Response::HTTP_OK);
+        }
+        catch (\Exception $e)
+        {
+            return new JsonResponse([
+                'message' => "{$e->getMessage()}"
+            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        }
     }
 
     #[Route(path: '/missing/unique', name: 'show_unique_missing_pokemon')]
