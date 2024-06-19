@@ -49,7 +49,7 @@ class PokemonManager
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();
         // Specify the relative path to the CSV file
-        $path = $base_dir . '/var/card.csv';
+        $path = $base_dir . '/var/cards.csv';
 
         // Create a CSV reader instance
         $csv = Reader::createFromPath($path, 'r');

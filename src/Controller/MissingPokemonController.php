@@ -124,10 +124,6 @@ class MissingPokemonController extends AbstractController
                 'title' => 'Cradily',
             ],
             [
-                'id' => 373,
-                'title' => 'Salamence',
-            ],
-            [
                 'id' => 496,
                 'title' => 'Servine',
             ],
@@ -166,14 +162,6 @@ class MissingPokemonController extends AbstractController
             [
                 'id' => 796,
                 'title' => 'Xurkitree',
-            ],
-            [
-                'id' => 798,
-                'title' => 'Kartana',
-            ],
-            [
-                'id' => 799,
-                'title' => 'Guzzlord',
             ],
             [
                 'id' => 800,
