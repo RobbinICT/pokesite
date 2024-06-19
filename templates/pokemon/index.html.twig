@@ -2,7 +2,8 @@
 
 {% block body %}
 
-    {% embed "search_bar.html.twig" %}{% endembed %}
+    {% embed '_components/search_bar.html.twig' %}{% endembed %}
+    {% embed '_components/back_to_top_button.html.twig' %}{% endembed %}
 
     {# List #}
     <div class="gap-4">
@@ -36,5 +37,5 @@
 
 {% block javascripts %}
     {{ parent() }}
-    {% embed 'lazy_loading_js.html.twig' %}{% endembed %}
+    {% embed '_components/lazy_loading_js.html.twig' %}{% endembed %}
 {% endblock %}

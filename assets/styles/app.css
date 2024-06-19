@@ -1,7 +1,47 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
 body {
     background-color: skyblue;
+}
+
+.btn-back-to-top {
+    position:fixed;
+    left: 95%;
+    top:90%;
+}
+
+.header-button {
+    color: white;
+    background-color: #1d4ed8; /* Equivalent to bg-blue-700 */
+    transition: background-color 0.3s; /* For smooth hover effect */
+    font-weight: 500; /* Equivalent to font-medium */
+    border-radius: 0.5rem; /* Equivalent to rounded-lg */
+    font-size: 0.875rem; /* Equivalent to text-sm */
+    padding: 0.625rem 1.25rem; /* Equivalent to px-5 py-2.5 */
+    margin-right: 0.5rem; /* Equivalent to me-10 */
+    margin-bottom: 0.5rem; /* Equivalent to mb-2 */
+    outline: none; /* Equivalent to focus:outline-none */
+}
+
+.header-button:hover {
+    background-color: #1e40af; /* Equivalent to hover:bg-blue-800 */
+}
+
+.header-button:focus {
+    outline: none; /* Prevent default outline on focus */
+    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.5); /* Equivalent to focus:ring-4 focus:ring-blue-300 */
+}
+
+.header-button.dark {
+    background-color: #2563eb; /* Equivalent to dark:bg-blue-600 */
+}
+
+.header-button.dark:hover {
+    background-color: #1e3a8a; /* Equivalent to dark:hover:bg-blue-700 */
+}
+
+.header-button.dark:focus {
+    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.8); /* Equivalent to dark:focus:ring-blue-800 */
 }

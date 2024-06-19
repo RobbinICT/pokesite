@@ -3,8 +3,8 @@
     <head>
         <meta charset="UTF-8">
         <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/flowbite.min.css" rel="stylesheet" />
+        <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
         <title>{% block title %}Pokesite{% endblock %}</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text><text y=%221.3em%22 x=%220.2em%22 font-size=%2276%22 fill=%22%23fff%22>sf</text></svg>">
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
@@ -12,65 +12,64 @@
         {% block javascripts %}
             {{ encore_entry_script_tags('app') }}
         {% endblock %}
+    </head>
 
-        <h1 class="flex items-center justify-center mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Robbin's Personal Pokesite</h1>
+    <body>
+    <h1 class="flex items-center justify-center mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Robbin's Personal Pokesite</h1>
 
+    <div class="flex items-center justify-center">
+        <a href="{{ path('show_final_pokemon') }}">
+            <button type="button" class="header-button">
+                Final list
+            </button>
+        </a>
+
+        <a href="{{ path('show_all_pokemon') }}">
+            <button type="button" class="header-button">
+                Complete list
+            </button>
+        </a>
+
+        <a href="{{ path('show_missing_pokemon') }}">
+            <button type="button" class="header-button">
+                Missing
+            </button>
+        </a>
+
+        <a href="{{ path('show_unique_missing_pokemon') }}">
+            <button type="button" class="header-button">
+                Missing unique
+            </button>
+        </a>
+    </div>
+
+    {% if SUPER_ADMIN == 'true' %}
         <div class="flex items-center justify-center">
-            <a href="{{ path('show_final_pokemon') }}">
-                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    Final list
+            <a href="{{ path('import_as_new_database') }}">
+                <button type="button" class="header-button">
+                    Clean import
                 </button>
             </a>
 
-            <a href="{{ path('show_all_pokemon') }}">
-                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    Complete list
+            <a href="{{ path('add_to_database') }}">
+                <button type="button" class="header-button">
+                    Add to database
                 </button>
             </a>
 
-            <a href="{{ path('show_missing_pokemon') }}">
-                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    Missing
+            <a href="{{ path('add_image_urls') }}">
+                <button type="button" class="header-button">
+                    Add missing URLs
                 </button>
             </a>
 
-            <a href="{{ path('show_unique_missing_pokemon') }}">
-                <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                    Missing unique
+            <a href="{{ path('download_images') }}">
+                <button type="button" class="header-button">
+                    Download missing images
                 </button>
             </a>
         </div>
-
-        {% if SUPER_ADMIN == 'true' %}
-            <div class="flex items-center justify-center">
-                <a href="{{ path('import_as_new_database') }}">
-                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Clean import
-                    </button>
-                </a>
-
-                <a href="{{ path('add_to_database') }}">
-                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Add to database
-                    </button>
-                </a>
-
-                <a href="{{ path('add_image_urls') }}">
-                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Add missing URLs
-                    </button>
-                </a>
-
-                <a href="{{ path('download_images') }}">
-                    <button type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-10 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">
-                        Download missing images
-                    </button>
-                </a>
-            </div>
-        {% endif %}
-
-    </head>
-    <body>
+    {% endif %}
         {% block body %}{% endblock %}
     </body>
 </html>
