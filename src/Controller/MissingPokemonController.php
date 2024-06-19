@@ -108,107 +108,107 @@ class MissingPokemonController extends AbstractController
     {
         $missing = [
             [
+                'id' => 154,
                 'title' => 'Meganium',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/154.png',
             ],
             [
+                'id' => 157,
                 'title' => 'Typhlosion',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/157.png',
             ],
             [
+                'id' => 254,
                 'title' => 'Sceptile',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/254.png',
             ],
             [
+                'id' => 346,
                 'title' => 'Cradily',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/346.png',
             ],
             [
+                'id' => 373,
                 'title' => 'Salamence',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/373.png',
             ],
             [
+                'id' => 496,
                 'title' => 'Servine',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/496.png',
             ],
             [
+                'id' => 697,
                 'title' => 'Tyrantrum',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/697.png',
             ],
             [
+                'id' => 699,
                 'title' => 'Aurorus',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/699.png',
             ],
             [
+                'id' => 733,
                 'title' => 'Toucannon',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/733.png',
             ],
             [
+                'id' => 773,
                 'title' => 'Silvally',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/773.png',
             ],
             [
+                'id' => 784,
                 'title' => 'Kommo-o',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/784.png',
             ],
             [
+                'id' => 793,
                 'title' => 'Nihilego',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/793.png',
             ],
             [
+                'id' => 794,
                 'title' => 'Buzzwole',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/794.png',
             ],
             [
+                'id' => 795,
                 'title' => 'Pheromosa',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/795.png',
             ],
             [
+                'id' => 796,
                 'title' => 'Xurkitree',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/796.png',
             ],
             [
+                'id' => 798,
                 'title' => 'Kartana',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/798.png',
             ],
             [
+                'id' => 799,
                 'title' => 'Guzzlord',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/799.png',
             ],
             [
+                'id' => 800,
                 'title' => 'Necrozma',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/800.png',
             ],
             [
+                'id' => 804,
                 'title' => 'Naganadel',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/804.png',
             ],
             [
+                'id' => 805,
                 'title' => 'Stakataka',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/805.png',
             ],
             [
+                'id' => 1018,
                 'title' => 'Archaludon',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/1018.png',
             ],
             [
+                'id' => 1019,
                 'title' => 'Hydrapple',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/1019.png',
             ],
             [
+                'id' => 1024,
                 'title' => 'Terapagos',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/1024.png',
             ],
             [
+                'id' => 1025,
                 'title' => 'Pecharunt',
-                'url' => 'https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/1025.png',
             ],
         ];
 
         $pokemon = [];
         foreach ($missing as $miss)
         {
-            $pokemon[] = new MissingUniquePokemon($miss['title'], $miss['url']);
+            $pokemon[] = new MissingUniquePokemon($miss['id'], $miss['title']);
         }
 
         if (ConfigManager::getAlphabeticalOrderForUniqueMissingPokemonEnvironmentVariable())

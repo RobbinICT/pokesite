@@ -18,10 +18,15 @@ class MissingUniquePokemon
     #[ORM\Column]
     public string $url;
 
-    public function __construct(string $title, string $url)
+    #[ORM\Column]
+    public string $tcg_dex_url;
+
+    public function __construct(int $id, string $title)
     {
+        $this->id = $id;
         $this->title = $title;
-        $this->url = $url;
+        $this->setUrl($id);
+        $this->setTcgdexUrl($id);
     }
 
     public function getId(): int
@@ -44,8 +49,18 @@ class MissingUniquePokemon
         return $this->url;
     }
 
-    public function setUrl(string $url): void
+    public function setUrl(int $id): void
     {
-        $this->url = $url;
+        $this->url = "https://www.pokemon.com/static-assets/content-assets/cms2/img/pokedex/full/$id.png";
+    }
+
+    public function getTcgDexUrl(): string
+    {
+        return $this->tcg_dex_url;
+    }
+
+    public function setTcgDexUrl(int $id): void
+    {
+        $this->tcg_dex_url = "https://www.serebii.net/card/dex/$id.shtml";
     }
 }
