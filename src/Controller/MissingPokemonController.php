@@ -4,12 +4,10 @@ namespace App\Controller;
 
 use App\Entity\MissingPokemon;
 use App\Entity\MissingUniquePokemon;
-use App\Entity\Pokemon;
 use App\Service\ConfigManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;

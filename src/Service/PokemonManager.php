@@ -4,13 +4,7 @@ namespace App\Service;
 
 use App\Entity\Pokemon;
 use Doctrine\ORM\EntityManagerInterface;
-use League\Csv\Reader;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\DomCrawler\Crawler;
-use Symfony\Component\HttpClient\HttpClient;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpKernel\KernelInterface;
 
 class PokemonManager
 {
