@@ -6,6 +6,8 @@ use App\Entity\MissingPokemon;
 use App\Entity\Pokemon;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Reader;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpKernel\KernelInterface;
 
 class DatabaseManager
@@ -58,7 +60,10 @@ class DatabaseManager
                     {
                         $base_url = "https://www.pokellector.com/";
                         $url = $base_url . Pokemon::hyphenate($serie_name) . "-Expansion" . "/" . "Card-" . Pokemon::getSerieNrGallery($serie_name, $serie_nr);
-                        $crawler = $this->pokemon_manager->getCrawler($url);
+                        $client = HttpClient::create();
+                        $response = $client->request('GET', $url);
+                        $content = $response->getContent();
+                        $crawler = new Crawler($content);
                         $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
                         $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
                         $missing_pokemon = new MissingPokemon($title, $serie_name, $serie_nr, $image_url);

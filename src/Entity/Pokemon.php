@@ -32,8 +32,8 @@ class Pokemon
     #[ORM\Column]
     public string $list;
 
-    #[ORM\Column]
-    public ?string $url;
+    #[ORM\Column(nullable: true)]
+    public ?string $url = null;
 
     public function __construct(int $dex_nr, string $name, int $gen, string $serie, int $serie_nr, string $list)
     {

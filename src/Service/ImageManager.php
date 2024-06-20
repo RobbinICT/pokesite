@@ -1,53 +1,59 @@
 <?php
 
-namespace App\Controller;
+namespace App\Service;
 
 use App\Entity\MissingPokemon;
 use App\Entity\Pokemon;
-use App\Service\PokemonManager;
 use Doctrine\ORM\EntityManagerInterface;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\DomCrawler\Crawler;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\KernelInterface;
-use Symfony\Component\Routing\Attribute\Route;
 
-class ImageController extends AbstractController
+class ImageManager
 {
     private EntityManagerInterface $entity_manager;
-    private PokemonManager $pokemon_manager;
     private KernelInterface $kernel;
-
-    public function __construct(EntityManagerInterface $entity_manager, PokemonManager $pokemon_manager, KernelInterface $kernel)
+    public function __construct(EntityManagerInterface $entity_manager, KernelInterface $kernel)
     {
         $this->entity_manager = $entity_manager;
-        $this->pokemon_manager = $pokemon_manager;
         $this->kernel = $kernel;
     }
 
-    #[Route(path: '/images/urls', name: 'add_image_urls')]
-    public function getImage(Request $request)
+    public function addImageUrls(): int
     {
-        try {
-            $this->pokemon_manager->images();
-            return new JsonResponse([
-                'message' => "Added image urls successfully"
-            ], Response::HTTP_OK);
-        } catch (\Exception $e) {
-            return new JsonResponse([
-                'message' => "{$e->getMessage()}"
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
+        $repo = $this->entity_manager->getRepository(Pokemon::class);
+        $batch_size = 20;
+        $added = 0;
+
+        $has_next_batch = true;
+        while ($has_next_batch)
+        {
+            $batch = $repo->getBatchOfPokemonWithoutURL($batch_size);
+            if (\count($batch) < $batch_size) {
+                $has_next_batch = false;
+            }
+
+            /** @var Pokemon $pokemon */
+            foreach ($batch as $pokemon)
+            {
+                $this->setImageHostingUrl($pokemon);
+                $added++;
+            }
+            $this->entity_manager->flush();
+            sleep(1);
         }
+        $this->entity_manager->flush();
+        return $added;
     }
 
-    #[Route(path: '/images/download', name: 'download_images')]
-    public function downloadImages(Request $request)
+    public function downloadImages(): ?array
     {
         $pokemon_list = $this->entity_manager->getRepository(Pokemon::class)->getPokemon();
         $path = $this->kernel->getProjectDir() . '/public/images/pokemon/';
         $failed = [];
-        $new_images = 0;
 
         /** @var Pokemon $pokemon */
         foreach ($pokemon_list as $pokemon) {
@@ -70,25 +76,21 @@ class ImageController extends AbstractController
                 continue;
             }
             file_put_contents($path . $filename, $image_content);
-            $new_images++;
         }
 
-        if (\count($failed) > 0)
+        if (!empty($failed))
         {
-            return new JsonResponse(['Count' => \count($failed), 'Pokemon' => $failed]);
+            return $failed;
         }
-        return new JsonResponse([
-            'message' => "$new_images new images downloaded"
-        ], Response::HTTP_OK);
+
+        return null;
     }
 
-    #[Route(path: '/images/download/missing-pokemon', name: 'download_images_missing_pokemon')]
-    public function downloadImagesMissingPokemon(Request $request)
+    public function downloadImagesMissingPokemon()
     {
         $pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAll();
         $path = $this->kernel->getProjectDir() . '/public/images/missing-pokemon/';
         $failed = [];
-        $new_images = 0;
 
         /** @var MissingPokemon $pokemon */
         foreach ($pokemon_list as $pokemon) {
@@ -111,15 +113,40 @@ class ImageController extends AbstractController
                 continue;
             }
             file_put_contents($path . $filename, $image_content);
-            $new_images++;
         }
 
-        if (\count($failed) > 0)
+        if (!empty($failed))
         {
-            return new JsonResponse(['Count' => \count($failed), 'Pokemon' => $failed]);
+            return $failed;
         }
-        return new JsonResponse([
-            'message' => "$new_images new images downloaded"
-        ], Response::HTTP_OK);
+
+        return null;
+    }
+
+    private function setImageHostingUrl(Pokemon $pokemon)
+    {
+        $url = $pokemon->generatePokellectorUrl();
+        if (!$url)
+        {
+            return false;
+        }
+
+        $client = HttpClient::create();
+        $response = $client->request('GET', $url);
+        $content = $response->getContent();
+        $crawler = new Crawler($content);
+        $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
+        if (!str_contains($image_url, strtok($pokemon->getCleanName(), ' ')))
+        {
+            throw new \Exception(
+                "Invalid:\n " .
+                "Serie:{$pokemon->getSerie()} ({$pokemon->getSerieNr()})\n " .
+                "Pokemon: {$pokemon->getName()}\n " .
+                "Pokellector: $url\n " .
+                "Image: $image_url"
+            );
+        }
+        $pokemon->setUrl($image_url);
+        $this->entity_manager->persist($pokemon);
     }
 }

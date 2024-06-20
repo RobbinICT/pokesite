@@ -16,30 +16,10 @@ use Symfony\Component\Routing\Attribute\Route;
 class PokemonController extends AbstractController
 {
     private EntityManagerInterface $entity_manager;
-    private PokemonManager $pokemon_manager;
 
-    public function __construct(EntityManagerInterface $entity_manager, PokemonManager $pokemon_manager)
+    public function __construct(EntityManagerInterface $entity_manager)
     {
         $this->entity_manager = $entity_manager;
-        $this->pokemon_manager = $pokemon_manager;
-    }
-
-    #[Route(path: '/test', name: 'test')]
-    public function test(Request $request)
-    {
-        try {
-            $pikachu = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(['name' => 'Pikachu']);
-            $this->pokemon_manager->getFullTitle($pikachu);
-            return new JsonResponse([
-                'message' => "Added image urls successfully"
-            ], Response::HTTP_OK);
-        }
-        catch (\Exception $e)
-        {
-            return new JsonResponse([
-                'message' => "{$e->getMessage()}"
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
     }
 
     #[Route(path: '/', name: 'show_final_pokemon')]
@@ -89,23 +69,5 @@ class PokemonController extends AbstractController
 
             'pokemon' => $show_pokemon,
         ]);
-    }
-
-    #[Route(path: '/print-missing', name: 'print_missing_serie_numbers')]
-    public function getMissing(Request $request)
-    {
-        try {
-            $missing = $this->pokemon_manager->printMissingPokemon();
-            return new JsonResponse([
-                'total'   => $missing[1],
-                'missing' => $missing[0],
-            ], Response::HTTP_OK);
-        }
-        catch (\Exception $e)
-        {
-            return new JsonResponse([
-                'message' => "{$e->getMessage()}"
-            ], Response::HTTP_INTERNAL_SERVER_ERROR);
-        }
     }
 }
