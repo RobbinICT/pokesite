@@ -1,0 +1,20 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+    <div class="flex items-center justify-center min-h-screen py-10">
+        <div class="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
+            {{ form_start(form, {'attr': {'class': 'space-y-6'}, 'method': 'POST'}) }}
+            {% for error in form.cards_file.vars.errors %}
+                <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">{{ error.message }}</div>
+            {% endfor %}
+            <div class="space-y-4">
+                {{ form_row(form.cards_file, {'attr': {'class': 'form-input mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50'}}) }}
+            </div>
+            <div class="flex justify-center">
+                <button class="header-button mt-3 w-full py-2 px-4 bg-indigo-600 text-white font-semibold rounded-md shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-75" type="submit">SUBMIT</button>
+            </div>
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
