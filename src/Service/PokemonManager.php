@@ -15,7 +15,6 @@ use Symfony\Component\HttpKernel\KernelInterface;
 class PokemonManager
 {
     private LoggerInterface $logger;
-    private KernelInterface $kernel;
     private EntityManagerInterface $entity_manager;
 
     public const SERIE_SV_SCARLET_VIOLET = 'Scarlet & Violet';
@@ -25,14 +24,13 @@ class PokemonManager
     public const SERIE_SV_TEMPORAL_FORCES = 'Temporal Forces';
     public const SERIE_SV_TWILIGHT_MASQUERADE = 'Twilight Masquerade';
 
-    public function __construct(LoggerInterface $logger, KernelInterface $kernel, EntityManagerInterface $entity_manger)
+    public function __construct(LoggerInterface $logger, EntityManagerInterface $entity_manger)
     {
         $this->logger = $logger;
-        $this->kernel = $kernel;
         $this->entity_manager = $entity_manger;
     }
 
-    public static function getScarletVioletMainSeries()
+    public static function getScarletVioletMainSeries(): array
     {
         return [
             PokemonManager::SERIE_SV_SCARLET_VIOLET,
@@ -42,29 +40,6 @@ class PokemonManager
             PokemonManager::SERIE_SV_TEMPORAL_FORCES,
             PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE
         ];
-    }
-
-    public function import()
-    {
-        // Get the base directory of your Symfony project
-        $base_dir = $this->kernel->getProjectDir();
-        // Specify the relative path to the CSV file
-        $path = $base_dir . '/var/cards.csv';
-
-        // Create a CSV reader instance
-        $csv = Reader::createFromPath($path, 'r');
-        $csv->setDelimiter(';');
-        $csv->setHeaderOffset(0);
-
-        // Iterate through each row
-        foreach ($csv as $row) {
-            $serie_nr = $this->extractNumericPart($row['SerieNr']);
-            $pokemon = new Pokemon((int)$row['Ndex'], $row['Name'], (int)$row['Gen'], $row['Serie'], $serie_nr, $row['ListNr']);
-            $pokemon->setUrl($row['Url']);
-            $this->entity_manager->persist($pokemon);
-        }
-
-        $this->entity_manager->flush();
     }
 
     public function images()
@@ -141,32 +116,6 @@ class PokemonManager
         return new Crawler($content);
     }
 
-    public function printMissingPokemon()
-    {
-        $count = 0;
-        $missing = [];
-        foreach (self::getScarletVioletMainSeries() as $serie_name)
-        {
-            $missing_in_serie = $this->checkForMissingPokemonInSerie($serie_name);
-
-            if (!empty($missing_in_serie))
-            {
-                foreach ($missing_in_serie as $serie_nr)
-                {
-                    $base_url = "https://www.pokellector.com/";
-                    $url = $base_url . Pokemon::hyphenate($serie_name) . "-Expansion" . "/" . "Card-" . Pokemon::getSerieNrGallery($serie_name, $serie_nr);
-                    $crawler = $this->getCrawler($url);
-                    $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
-                    $missing[$serie_name][] = $title;
-                }
-
-                $count += \count($missing_in_serie);
-            }
-        }
-
-        return [$missing, $count];
-    }
-
     public function checkForMissingPokemonInSerie(string $serie_name): array
     {
         $my_numbers = array_column($this->entity_manager->getRepository(Pokemon::class)->getPokemonSerieNumbersBySerie($serie_name), 'serie_nr');
@@ -174,11 +123,6 @@ class PokemonManager
         $all_numbers = range(1, $limit);
         $missing_numbers = array_diff($all_numbers, $my_numbers);
         return array_splice($missing_numbers, 0);
-    }
-
-    private function extractNumericPart(string $value)
-    {
-        return (int)preg_replace('/[^0-9]/', '', $value);
     }
 
     public static function getLimitOfSerie(string $serie_name)

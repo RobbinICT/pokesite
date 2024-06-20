@@ -26,6 +26,11 @@ class UploadFileController extends AbstractController
     #[Route(path: '/file/upload', name: 'upload_file')]
     public function uploadFile(Request $request): Response
     {
+        if (ConfigManager::getSuperAdminEnvironmentVariable() !== true)
+        {
+            return $this->redirectToRoute('show_final_pokemon');
+        }
+
         $form = $this->createForm(UploadFileType::class);
         if ($request->isMethod('POST'))
         {

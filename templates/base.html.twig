@@ -41,15 +41,9 @@
 
     {% if SUPER_ADMIN == 'true' %}
         <div class="flex items-center justify-center">
-            <a href="{{ path('import_as_new_database') }}">
+            <a href="{{ path('upload_file') }}">
                 <button type="button" class="header-button">
-                    Clean import
-                </button>
-            </a>
-
-            <a href="{{ path('add_to_database') }}">
-                <button type="button" class="header-button">
-                    Add to database
+                    Upload file
                 </button>
             </a>
 
