@@ -13,10 +13,15 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     default-mysql-client \
     libyaml-dev \
+    curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd mbstring zip pdo pdo_mysql soap intl opcache \
     && pecl install yaml \
     && docker-php-ext-enable yaml
+
+# Install Node.js and npm
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt-get install -y nodejs
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -33,6 +38,10 @@ COPY . .
 
 # Install PHP dependencies
 RUN composer install --prefer-dist --no-scripts --no-progress --no-suggest --no-interaction
+
+# Install Node.js dependencies and build assets
+RUN npm install
+RUN npm run build
 
 # Set permissions for entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
