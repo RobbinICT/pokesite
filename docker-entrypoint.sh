@@ -1,10 +1,11 @@
 #!/bin/bash
+set -e
 
-# Run Composer install
+# Install Composer dependencies
 composer install --prefer-dist --no-scripts --no-progress --no-suggest --no-interaction
 
-# Additional setup commands here, e.g., running migrations
-# php bin/console doctrine:migrations:migrate --no-interaction
+# Run Symfony migrations
+php bin/console doctrine:migrations:migrate --no-interaction
 
-# Start the PHP-FPM service
-php-fpm
+# Start PHP-FPM
+exec php-fpm
