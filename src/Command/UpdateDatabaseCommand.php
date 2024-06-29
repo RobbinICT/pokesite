@@ -44,7 +44,7 @@ class UpdateDatabaseCommand extends Command
         $update_mode = filter_var($input->getArgument('update_mode'));
         switch ($update_mode)
         {
-            case 'clean-import':
+            case 'clean_import':
                 $io->note('Clean importing cards.csv');
                 $this->entity_manager->getRepository(Pokemon::class)->clearPokemon();
             case 'add':
@@ -52,7 +52,7 @@ class UpdateDatabaseCommand extends Command
                 $this->database_manager->importCsvFile();
                 break;
             default:
-                $io->error("Argument should be 'clean-import' or 'add'");
+                $io->error("Argument should be 'clean_import' or 'add'");
                 return 1;
         }
 
