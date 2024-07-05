@@ -2,8 +2,10 @@
 
 namespace App\Controller;
 
+use App\Entity\Config;
 use App\Form\UploadFileType;
 use App\Service\ConfigManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -16,16 +18,20 @@ use Symfony\Component\Routing\Attribute\Route;
 class UploadFileController extends AbstractController
 {
     private KernelInterface $kernel;
+    private EntityManagerInterface $entity_manager;
 
-    public function __construct(KernelInterface $kernel)
+    public function __construct(KernelInterface $kernel, EntityManagerInterface $entity_manager)
     {
         $this->kernel = $kernel;
+        $this->entity_manager = $entity_manager;
     }
 
     #[Route(path: '/file/upload', name: 'upload_file')]
     public function uploadFile(Request $request): Response
     {
-        if (ConfigManager::getSuperAdminEnvironmentVariable() !== true)
+        /** @var Config $config */
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
+        if ($config->getIsSuperActionsEnabled() !== true)
         {
             return $this->redirectToRoute('show_final_pokemon');
         }
@@ -60,8 +66,9 @@ class UploadFileController extends AbstractController
             }
         }
 
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         return $this->render('upload_file.html.twig', [
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
+            'config' => $config,
             'form' => $form->createView(),
         ]);
     }

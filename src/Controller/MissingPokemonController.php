@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Config;
 use App\Entity\MissingPokemon;
 use App\Entity\MissingUniquePokemon;
 use App\Service\ConfigManager;
@@ -25,7 +26,9 @@ class MissingPokemonController extends AbstractController
     public function index(Request $request): Response
     {
         $search_string = $request->get('q');
-        $exclude_paradox_rift = ConfigManager::getExcludeParadoxRiftEnvironmentVariable();
+        /** @var Config $config */
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
+        $exclude_paradox_rift = $config->getIsParadoxRiftExclude();
         $missing_pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAllMissingPokemon($search_string, $exclude_paradox_rift);
         $total = \count($missing_pokemon_list);
 
@@ -42,11 +45,8 @@ class MissingPokemonController extends AbstractController
         }
 
         return $this->render('missing_pokemon/index.html.twig',[
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
+            'config' => $config,
             'pokemon' => $grouped_pokemon,
-
             'search_string' => $search_string,
             'total' => $total,
         ]);
@@ -58,11 +58,10 @@ class MissingPokemonController extends AbstractController
         MissingPokemon $pokemon
     ): Response
     {
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         $show_pokemon = $this->entity_manager->getRepository(MissingPokemon::class)->findOneBy(['title' => $pokemon->getTitle()]);
         return $this->render('missing_pokemon/show.html.twig', [
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
+            'config' => $config,
             'pokemon' => $show_pokemon,
         ]);
     }
@@ -163,7 +162,9 @@ class MissingPokemonController extends AbstractController
             $pokemon[] = new MissingUniquePokemon($miss['id'], $miss['title']);
         }
 
-        if (ConfigManager::getAlphabeticalOrderForUniqueMissingPokemonEnvironmentVariable())
+        /** @var Config $config */
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
+        if ($config->getIsInAlphabeticalOrder())
         {
             usort($pokemon, function($a, $b) {
                 return strcmp($a->getTitle(), $b->getTitle());
@@ -172,9 +173,7 @@ class MissingPokemonController extends AbstractController
 
         $total = \count($pokemon);
         return $this->render('missing_pokemon/unique_index.html.twig',[
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
+            'config' => $config,
             'pokemon' => $pokemon,
             'total' => $total,
         ]);

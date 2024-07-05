@@ -2,13 +2,12 @@
 
 namespace App\Controller;
 
+use App\Entity\Config;
 use App\Entity\Pokemon;
 use App\Service\ConfigManager;
-use App\Service\PokemonManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
@@ -27,13 +26,10 @@ class PokemonController extends AbstractController
     {
         $search_string = $request->get('q');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string, true);
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         return $this->render('pokemon/index.html.twig',[
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
-
+            'config' => $config,
             'pokemon' => $pokemon,
-
             'search_string' => $search_string,
         ]);
     }
@@ -43,12 +39,10 @@ class PokemonController extends AbstractController
     {
         $search_string = $request->get('q');
         $pokemon = $this->entity_manager->getRepository(Pokemon::class)->getPokemon($search_string);
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         return $this->render('pokemon/index.html.twig',[
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
+            'config' => $config,
             'pokemon' => $pokemon,
-
             'search_string' => $search_string,
         ]);
     }
@@ -59,14 +53,12 @@ class PokemonController extends AbstractController
         Pokemon $pokemon
     ): Response
     {
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         $show_pokemon = $this->entity_manager->getRepository(Pokemon::class)->findOneBy(
             ['name' => $pokemon->getName(), 'serie' => $pokemon->getSerie(), 'serie_nr' => $pokemon->getSerieNr()]
         );
         return $this->render('pokemon/show.html.twig', [
-            ConfigManager::ENV_VAR_SUPER_ADMIN => ConfigManager::getSuperAdminEnvironmentVariable(),
-            ConfigManager::ENV_VAR_USE_LOCAL_CARDS => ConfigManager::getUseLocalCardsEnvironmentVariable(),
-
-
+            'config' => $config,
             'pokemon' => $show_pokemon,
         ]);
     }

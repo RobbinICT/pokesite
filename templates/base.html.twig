@@ -39,7 +39,7 @@
         </a>
     </div>
 
-    {% if SUPER_ADMIN == 'true' %}
+    {% if config.getIsSuperActionsEnabled() == 'true' %}
         <div class="flex items-center justify-center">
             <a href="{{ path('upload_file') }}">
                 <button type="button" class="header-button">

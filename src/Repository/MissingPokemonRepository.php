@@ -5,7 +5,7 @@ namespace App\Repository;
 use App\Service\PokemonManager;
 use Doctrine\ORM\EntityRepository;
 
-class MissingPokemonRepository  extends EntityRepository
+class MissingPokemonRepository extends EntityRepository
 {
     public function findAllMissingPokemon(?string $search_term, bool $exclude_paradox_rift)
     {
