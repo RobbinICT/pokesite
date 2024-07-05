@@ -28,7 +28,7 @@ class UpdateMissingPokemonCommand extends Command
 
     public function configure(): void
     {
-        $this->setDescription('Update missing pokemon by adding new ones and removing aquired ones');
+        $this->setDescription('Update missing pokemon by adding new ones and removing acquired ones');
     }
 
     public function execute(InputInterface $input, OutputInterface $output): int
