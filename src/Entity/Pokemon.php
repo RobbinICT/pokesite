@@ -175,6 +175,7 @@ class Pokemon
             case 'Sword & Shield - Promos':
             case 'XY - Promos':
             case 'Sun & Moon':
+            case 'Sun & Moon - Promos':
             case 'Forbidden Light':
                 return 'English-'.$replace_string;
             case 'Scarlet & Violet':
