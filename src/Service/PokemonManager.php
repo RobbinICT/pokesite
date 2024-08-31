@@ -17,6 +17,7 @@ class PokemonManager
     public const SERIE_SV_PARADOX_RIFT = 'Paradox Rift';
     public const SERIE_SV_TEMPORAL_FORCES = 'Temporal Forces';
     public const SERIE_SV_TWILIGHT_MASQUERADE = 'Twilight Masquerade';
+    public const SERIE_SV_SHROUDED_FABLE = 'Shrouded Fable';
 
     public function __construct(LoggerInterface $logger, EntityManagerInterface $entity_manger)
     {
@@ -32,7 +33,8 @@ class PokemonManager
             PokemonManager::SERIE_SV_OBSIDIAN_FLAMES,
             PokemonManager::SERIE_SV_PARADOX_RIFT,
             PokemonManager::SERIE_SV_TEMPORAL_FORCES,
-            PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE
+            PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE,
+            PokemonManager::SERIE_SV_SHROUDED_FABLE,
         ];
     }
 
@@ -49,18 +51,20 @@ class PokemonManager
     {
         switch ($serie_name)
         {
-            case 'Scarlet & Violet':
+            case PokemonManager::SERIE_SV_SCARLET_VIOLET:
                 return 165;
-            case 'Paldea Evolved':
+            case PokemonManager::SERIE_SV_PALDEA_EVOLVED:
                 return 170;
-            case 'Obsidian Flames':
+            case PokemonManager::SERIE_SV_OBSIDIAN_FLAMES:
                 return 185;
-            case 'Paradox Rift':
+            case PokemonManager::SERIE_SV_PARADOX_RIFT:
                 return 158;
-            case 'Temporal Forces':
+            case PokemonManager::SERIE_SV_TEMPORAL_FORCES:
                 return 139;
-            case 'Twilight Masquerade':
+            case PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE:
                 return 140;
+            case PokemonManager::SERIE_SV_SHROUDED_FABLE:
+                    return 53;
         }
     }
 }
