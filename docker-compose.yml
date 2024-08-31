@@ -4,6 +4,7 @@ services:
   web:
     image: nginx:latest
     container_name: symfony_web
+    restart: unless-stopped
     ports:
       - "1998:80"
     volumes:
@@ -19,6 +20,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: symfony_php
+    restart: unless-stopped
     volumes:
       - ./:/var/www/html
       - ./php.ini:/usr/local/etc/php/conf.d/php.ini
@@ -28,6 +30,7 @@ services:
   db:
     image: mysql:8.0
     container_name: symfony_db
+    restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: symfony
