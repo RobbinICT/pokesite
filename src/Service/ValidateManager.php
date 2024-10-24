@@ -29,7 +29,7 @@ class ValidateManager
             if ($valid_gen != $gen)
             {
                 $key = "({$pokemon->getSerie()} - {$pokemon->getSerieNr()}): {$pokemon->getName()} [{$pokemon->getGen()}]";
-                $wrong[$key] = $valid_gen;
+                $wrong[] = $key;
             }
         }
 
