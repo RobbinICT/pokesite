@@ -35,13 +35,22 @@ class UpdateDatabaseCommand extends Command
     {
         $this
             ->setDescription("Clean import the '/var/cards.csv' file or add to the existing data")
-            ->addArgument('update_mode', InputArgument::REQUIRED, 'Clean import or add to database');
+            ->addArgument('update_mode', InputArgument::REQUIRED, 'Clean import or add to database')
+            ->addArgument('delimiter', InputArgument::OPTIONAL, 'Choose the delimiter', ';');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
+
+        $delimiter = $input->getArgument('delimiter');
+        if ($delimiter !== ';' && $delimiter !== ',' && $delimiter !== "\t")
+        {
+            $io->error("2nd argument should be ';', ',' or a tab");
+            return 1;
+        }
         $update_mode = filter_var($input->getArgument('update_mode'));
+
         switch ($update_mode)
         {
             case 'clean_import':
@@ -49,7 +58,7 @@ class UpdateDatabaseCommand extends Command
                 $this->entity_manager->getRepository(Pokemon::class)->clearPokemon();
             case 'add':
                 $io->note('Adding cards.csv to existing data');
-                $this->database_manager->importCsvFile();
+                $this->database_manager->importCsvFile($delimiter);
                 break;
             default:
                 $io->error("Argument should be 'clean_import' or 'add'");

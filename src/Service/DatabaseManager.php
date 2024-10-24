@@ -23,7 +23,7 @@ class DatabaseManager
         $this->kernel = $kernel;
     }
 
-    public function importCsvFile()
+    public function importCsvFile(string $delimiter = ';')
     {
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();
@@ -32,7 +32,7 @@ class DatabaseManager
 
         // Create a CSV reader instance
         $csv = Reader::createFromPath($path, 'r');
-        $csv->setDelimiter(';');
+        $csv->setDelimiter($delimiter);
         $csv->setHeaderOffset(0);
 
         // Iterate through each row

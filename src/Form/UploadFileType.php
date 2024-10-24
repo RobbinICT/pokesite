@@ -11,6 +11,11 @@ class UploadFileType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        /**
+         * docker exec -it <container_name> bash
+         * chown -R www-data:www-data /var/www/html/var/
+         * chmod -R 775 /var/www/html/var/
+         */
         $builder
             ->add('cards_file', FileType::class, [
                 'label' => false,
