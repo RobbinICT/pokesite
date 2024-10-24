@@ -18,6 +18,7 @@ class PokemonManager
     public const SERIE_SV_TEMPORAL_FORCES = 'Temporal Forces';
     public const SERIE_SV_TWILIGHT_MASQUERADE = 'Twilight Masquerade';
     public const SERIE_SV_SHROUDED_FABLE = 'Shrouded Fable';
+    public const SERIE_SV_STELLAR_CROWN = 'Stellar Crown';
 
     public function __construct(LoggerInterface $logger, EntityManagerInterface $entity_manger)
     {
@@ -35,6 +36,7 @@ class PokemonManager
             PokemonManager::SERIE_SV_TEMPORAL_FORCES,
             PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE,
             PokemonManager::SERIE_SV_SHROUDED_FABLE,
+            PokemonManager::SERIE_SV_STELLAR_CROWN,
         ];
     }
 
@@ -64,7 +66,9 @@ class PokemonManager
             case PokemonManager::SERIE_SV_TWILIGHT_MASQUERADE:
                 return 140;
             case PokemonManager::SERIE_SV_SHROUDED_FABLE:
-                    return 53;
+                return 53;
+            case PokemonManager::SERIE_SV_STELLAR_CROWN:
+                return 123;
         }
     }
 }
