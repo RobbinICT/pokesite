@@ -19,16 +19,16 @@ class UploadFileType extends AbstractType
                 'constraints' => [
                     new File([
                         'mimeTypes' => [
-//                            'text/csv',
+                            'text/csv',
                             'text/plain',
-//                            'application/csv',
-//                            'application/x-csv',
-//                            'text/x-csv',
-//                            'text/comma-separated-values',
-//                            'text/x-comma-separated-values',
-//                            'application/vnd.ms-excel',
-//                            'application/excel',
-//                            'application/vnd.msexcel',
+                            'application/csv',
+                            'application/x-csv',
+                            'text/x-csv',
+                            'text/comma-separated-values',
+                            'text/x-comma-separated-values',
+                            'application/vnd.ms-excel',
+                            'application/excel',
+                            'application/vnd.msexcel',
                         ],
                         'mimeTypesMessage' => 'Please upload a valid CSV file',
                     ])

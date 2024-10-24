@@ -5,7 +5,6 @@ namespace App\Controller;
 use App\Entity\Config;
 use App\Entity\MissingPokemon;
 use App\Entity\MissingUniquePokemon;
-use App\Service\ConfigManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -87,10 +86,6 @@ class MissingPokemonController extends AbstractController
                 'title' => 'Toucannon',
             ],
             [
-                'id' => 784,
-                'title' => 'Kommo-o',
-            ],
-            [
                 'id' => 793,
                 'title' => 'Nihilego',
             ],
@@ -109,18 +104,6 @@ class MissingPokemonController extends AbstractController
             [
                 'id' => 804,
                 'title' => 'Naganadel',
-            ],
-            [
-                'id' => 1018,
-                'title' => 'Archaludon',
-            ],
-            [
-                'id' => 1019,
-                'title' => 'Hydrapple',
-            ],
-            [
-                'id' => 1024,
-                'title' => 'Terapagos',
             ],
         ];
 
