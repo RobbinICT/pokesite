@@ -12,7 +12,7 @@
         </div>
         {% for serie, pokemons in pokemon %}
             <div class="mb-4">
-                <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">{{ serie }}</h2>
+                <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">{{ serie }} [{{ pokemons|length }}]</h2>
                 <div class="grid grid-cols-4 gap-4">
                     {% for pokemon in pokemons %}
                         <a href="{{ path('show_single_missing_pokemon', {'id': pokemon.id}) }}"
