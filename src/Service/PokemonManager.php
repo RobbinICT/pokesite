@@ -68,7 +68,7 @@ class PokemonManager
             case PokemonManager::SERIE_SV_SHROUDED_FABLE:
                 return 53;
             case PokemonManager::SERIE_SV_STELLAR_CROWN:
-                return 123;
+                return 128;
         }
     }
 }
