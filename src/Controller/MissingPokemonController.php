@@ -70,40 +70,8 @@ class MissingPokemonController extends AbstractController
     {
         $missing = [
             [
-                'id' => 496,
-                'title' => 'Servine',
-            ],
-            [
                 'id' => 697,
                 'title' => 'Tyrantrum',
-            ],
-            [
-                'id' => 699,
-                'title' => 'Aurorus',
-            ],
-            [
-                'id' => 733,
-                'title' => 'Toucannon',
-            ],
-            [
-                'id' => 793,
-                'title' => 'Nihilego',
-            ],
-            [
-                'id' => 794,
-                'title' => 'Buzzwole',
-            ],
-            [
-                'id' => 795,
-                'title' => 'Pheromosa',
-            ],
-            [
-                'id' => 796,
-                'title' => 'Xurkitree',
-            ],
-            [
-                'id' => 804,
-                'title' => 'Naganadel',
             ],
         ];
 
