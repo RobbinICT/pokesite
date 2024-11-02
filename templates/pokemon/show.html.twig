@@ -4,7 +4,7 @@
     <div class="flex flex-col items-center bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
         {% if config.getUseLocalCards() == 'true' %}
             <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                 src="/images/pokemon/{{ pokemon.getUniqueIdentifierV2 }}.png" alt="{{ pokemon.name }}"
+                 src="/images/pokemon/{{ pokemon.getUniqueIdentifierV2()|url_encode }}.png" alt="{{ pokemon.name }}"
                  onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
         {% else %}
             <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
