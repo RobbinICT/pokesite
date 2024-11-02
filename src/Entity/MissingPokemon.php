@@ -78,4 +78,9 @@ class MissingPokemon
     {
         $this->url = $url;
     }
+
+    public function getUniqueIdentifier(): string
+    {
+        return explode(' - ', $this->title)[1];
+    }
 }

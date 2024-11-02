@@ -23,7 +23,7 @@ class DatabaseManager
         $this->kernel = $kernel;
     }
 
-    public function importCsvFile(string $delimiter = ';')
+    public function importCsvFile(string $delimiter = ';'): void
     {
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();

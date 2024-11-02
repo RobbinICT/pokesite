@@ -45,9 +45,14 @@ class Pokemon
         $this->list = $list;
     }
 
-    public function getUniqueIdentifier()
+    public function getUniqueIdentifier(): string
     {
         return $this->getDexNr().'_'.$this->getName().'_'.$this->getSerie().'_'.$this->getSerieNr();
+    }
+
+    public function getUniqueIdentifierV2(): string
+    {
+        return $this->serie.'_'.$this->serie_nr;
     }
 
     public function getDexNr(): int

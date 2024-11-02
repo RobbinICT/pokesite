@@ -54,7 +54,7 @@ class ImageManager
 
         /** @var Pokemon $pokemon */
         foreach ($pokemon_list as $pokemon) {
-            $filename = $pokemon->getUniqueIdentifier() . '.png';
+            $filename = $pokemon->getUniqueIdentifierV2() . '.png';
 
             // Check if the file already exists
             if (file_exists($path . $filename)) {
@@ -91,7 +91,7 @@ class ImageManager
 
         /** @var MissingPokemon $pokemon */
         foreach ($pokemon_list as $pokemon) {
-            $filename = $pokemon->getTitle() . '.png';
+            $filename = $pokemon->getUniqueIdentifier() . '.png';
 
             // Check if the file already exists
             if (file_exists($path . $filename)) {
