@@ -38,12 +38,4 @@
 {% block javascripts %}
     {{ parent() }}
     {% embed '_components/lazy_loading_js.html.twig' %}{% endembed %}
-
-    <script>
-        document.addEventListener("error", function (event) {
-            if (event.target.tagName.toLowerCase() === "img") {
-                event.target.src = "/images/placeholder/card_placeholder.png";
-            }
-        }, true);
-    </script>
 {% endblock %}
