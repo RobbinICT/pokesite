@@ -8,6 +8,7 @@
 /vendor/
 /.idea/
 .DS_store
+/public/images
 ###< symfony/framework-bundle ###
 
 ###> phpunit/phpunit ###
