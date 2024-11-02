@@ -19,7 +19,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: pokesite
+    container_name: symfony_php
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
