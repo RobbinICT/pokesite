@@ -52,7 +52,7 @@ class Pokemon
 
     public function getUniqueIdentifierV2(): string
     {
-        return preg_replace('/\s+/', '_', $this->serie).'_'.$this->serie_nr;
+        return $this->serie.'_'.$this->serie_nr;
     }
 
     public function getDexNr(): int
