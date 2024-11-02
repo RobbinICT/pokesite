@@ -13,7 +13,7 @@
                    class="lazy flex flex-col items-center {% if pokemon.list == 'F' %} bg-green-100 hover:bg-green-200 {% elseif pokemon.list == 'Jumbo' %} bg-red-100 hover:bg-red-200 {% else %} bg-white hover:bg-gray-100 {% endif %} border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700">
                     {% if config.getUseLocalCards() == 'true' %}
                         <img class="lazy object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                             src="/images/pokemon/{{ pokemon.getUniqueIdentifierV2() }}.png" alt="{{ pokemon.name }}"
+                             data-src="{{ asset('/images/pokemon/' {{ pokemon.getUniqueIdentifierV2() }} '.png', 'https') }}"
                              onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
                     {% else %}
                         <img class="lazy object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
@@ -38,4 +38,12 @@
 {% block javascripts %}
     {{ parent() }}
     {% embed '_components/lazy_loading_js.html.twig' %}{% endembed %}
+
+    <script>
+        document.addEventListener("error", function (event) {
+            if (event.target.tagName.toLowerCase() === "img") {
+                event.target.src = "/images/placeholder/card_placeholder.png";
+            }
+        }, true);
+    </script>
 {% endblock %}
