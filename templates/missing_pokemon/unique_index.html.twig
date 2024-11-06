@@ -4,20 +4,95 @@
 
     {# List #}
     <div class="flex items-center justify-center">
-        <span class="text-3xl font-bold">Missing: {{ total }}</span>
+        {% if pokemon|length > 0 %}
+            <span class="text-3xl font-bold">Missing: {{ pokemon|length }} (+ {{ total }} forms)</span>
+        {% else %}
+            <span class="text-3xl font-bold">Missing: {{ total }} forms</span>
+        {% endif %}
     </div>
     <div class="gap-4">
-    <div class="grid grid-cols-6 gap-4">
-        {% for pokemon in pokemon %}
-            <div class="flex flex-col items-center">
-                <a class="bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
-                href="{{ pokemon.getTcgDexUrl() }}" target="_blank">
-                    <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
-                         src="/images/missing-unique/{{ pokemon.getTitle() }}.png" alt="{{ pokemon.title }}"
-                         onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
-                    <h5 class="flex flex-col items-center mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon.title }}</h5>
-                </a>
-            </div>
-        {% endfor %}
-    </div>
+    <br>
+    {% if pokemon|length > 0 %}
+        <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">Missing Unique Pokemon [{{ pokemon|length }}]</h2>
+        <br>
+        <div class="grid grid-cols-6 gap-4">
+            {% for pokemon in pokemon %}
+                <div class="flex flex-col items-center">
+                    <a class="bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
+                    href="{{ pokemon.getTcgDexUrl() }}" target="_blank">
+                        <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                             src="/images/missing-unique/{{ pokemon.getTitle() }}.png" alt="{{ pokemon.title }}"
+                             onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+                        <h5 class="flex flex-col items-center mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon.title }}</h5>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <br>
+    {% else %}
+        <h1 style="
+        font-family: Arial, sans-serif;
+        font-size: 3rem;
+        font-weight: bold;
+        text-align: center;
+        background: linear-gradient(90deg, red, orange, yellow, green, blue, indigo, violet);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        padding: 20px;
+        margin: 0;
+        text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        ">
+            All Unique Pokémon Collected!
+        </h1>
+    {% endif %}
+    {% if missing_alolan|length > 0 %}
+        <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">Missing Alolan Pokemon [{{ missing_alolan|length }}]</h2>
+        <br>
+        <div class="grid grid-cols-6 gap-4">
+            {% for pokemon in missing_alolan %}
+                <div class="flex flex-col items-center">
+                    <a class="bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" target="_blank">
+                        <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                             src="{{ pokemon[1] }}" alt="{{ pokemon[0] }}"
+                             onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+                        <h5 class="flex flex-col items-center mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon[0] }}</h5>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <br>
+    {% endif %}
+    {% if missing_galarian|length > 0 %}
+        <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">Missing Galarian Pokemon [{{ missing_galarian|length }}]</h2>
+        <br>
+        <div class="grid grid-cols-6 gap-4">
+            {% for pokemon in missing_galarian %}
+                <div class="flex flex-col items-center">
+                    <a class="bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" target="_blank">
+                        <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                             src="{{ pokemon[1] }}" alt="{{ pokemon[0] }}"
+                             onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+                        <h5 class="flex flex-col items-center mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon[0] }}</h5>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+        <br>
+    {% endif %}
+    {% if missing_hisuian|length > 0 %}
+        <h2 class="flex items-center justify-center text-xl font-bold tracking-tight bg-gray-500 text-white">Missing Hisuian Pokemon [{{ missing_hisuian|length }}]</h2>
+        <br>
+        <div class="grid grid-cols-6 gap-4">
+            {% for pokemon in missing_hisuian %}
+                <div class="flex flex-col items-center">
+                    <a class="bg-white border border-gray-200 rounded-lg shadow md:flex-row md:max-w-xl hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700" target="_blank">
+                        <img class="object-cover w-full rounded-t-lg h-96 md:h-auto md:w-48 md:rounded-none md:rounded-l-lg"
+                             src="{{ pokemon[1] }}" alt="{{ pokemon[0] }}"
+                             onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+                        <h5 class="flex flex-col items-center mb-2 text-2xl font-bold tracking-tight text-gray-900 dark:text-white">{{ pokemon[0] }}</h5>
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
 {% endblock %}

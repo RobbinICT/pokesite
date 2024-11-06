@@ -69,10 +69,7 @@ class MissingPokemonController extends AbstractController
     public function showUniqueMissingPokemon(Request $request): Response
     {
         $missing = [
-            [
-                'id' => 697,
-                'title' => 'Tyrantrum',
-            ],
+            [ 'id' => 697, 'title' => 'Tyrantrum']
         ];
 
         $pokemon = [];
@@ -80,6 +77,47 @@ class MissingPokemonController extends AbstractController
         {
             $pokemon[] = new MissingUniquePokemon($miss['id'], $miss['title']);
         }
+
+        $missing_alolan = [
+            ['Raichu', 'https://www.serebii.net/pokemon/art/026-a.png'],
+            ['Sandshrew', 'https://www.serebii.net/pokemon/art/027-a.png'],
+            ['Sandslash', 'https://www.serebii.net/pokemon/art/028-a.png'],
+            ['Vulpix', 'https://www.serebii.net/pokemon/art/037-a.png'],
+            ['Ninetales', 'https://www.serebii.net/pokemon/art/038-a.png'],
+            ['Diglett', 'https://www.serebii.net/pokemon/art/050-a.png'],
+            ['Dugtrio', 'https://www.serebii.net/pokemon/art/051-a.png'],
+            ['Meowth', 'https://www.serebii.net/pokemon/art/052-a.png'],
+            ['Persian', 'https://www.serebii.net/pokemon/art/053-a.png'],
+            ['Geodude', 'https://www.serebii.net/pokemon/art/074-a.png'],
+            ['Graveler', 'https://www.serebii.net/pokemon/art/075-a.png'],
+            ['Golem', 'https://www.serebii.net/pokemon/art/076-a.png'],
+            ['Muk', 'https://www.serebii.net/pokemon/art/089-a.png'],
+            ['Exeggutor', 'https://www.serebii.net/pokemon/art/103-a.png'],
+            ['Marowak', 'https://www.serebii.net/pokemon/art/105-a.png'],
+        ];
+
+        $missing_galarian = [
+            ['Ponyta', 'https://www.serebii.net/pokemon/art/077-g.png'],
+            ['Rapidash', 'https://www.serebii.net/pokemon/art/078-g.png'],
+            ['Slowbro', 'https://www.serebii.net/pokemon/art/080-g.png'],
+            ['Weezing', 'https://www.serebii.net/pokemon/art/110-g.png'],
+            ['Slowking', 'https://www.serebii.net/pokemon/art/199-g.png'],
+            ['Linoone', 'https://www.serebii.net/pokemon/art/264-g.png'],
+            ['Darmanitan', 'https://www.serebii.net/pokemon/art/555-g.png'],
+            ['Yamask', 'https://www.serebii.net/pokemon/art/562-g.png'],
+        ];
+
+        $missing_hisuian = [
+            ['Voltorb', 'https://www.serebii.net/pokemon/art/100-h.png'],
+            ['Typhlosion', 'https://www.serebii.net/pokemon/art/157-h.png'],
+            ['Samurott', 'https://www.serebii.net/pokemon/art/503-h.png'],
+            ['Zoroark', 'https://www.serebii.net/pokemon/art/571-h.png'],
+            ['Braviary', 'https://www.serebii.net/pokemon/art/628-h.png'],
+            ['Sliggoo', 'https://www.serebii.net/pokemon/art/705-h.png'],
+            ['Goodra', 'https://www.serebii.net/pokemon/art/706-h.png'],
+            ['Avalugg', 'https://www.serebii.net/pokemon/art/713-h.png'],
+            ['Decidueye', 'https://www.serebii.net/pokemon/art/724-h.png'],
+        ];
 
         /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
@@ -90,11 +128,14 @@ class MissingPokemonController extends AbstractController
             });
         }
 
-        $total = \count($pokemon);
+        $total = \count($missing_alolan) + \count($missing_galarian) + \count($missing_hisuian);
         return $this->render('missing_pokemon/unique_index.html.twig',[
             'config' => $config,
             'pokemon' => $pokemon,
             'total' => $total,
+            'missing_alolan' => $missing_alolan,
+            'missing_galarian' => $missing_galarian,
+            'missing_hisuian' => $missing_hisuian,
         ]);
     }
 }
