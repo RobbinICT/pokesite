@@ -1,7 +1,6 @@
-# Dockerfile
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install system dependencies including bash and useful terminal tools
 RUN apt-get update && apt-get install -y \
     git \
     unzip \
@@ -13,35 +12,48 @@ RUN apt-get update && apt-get install -y \
     libxml2-dev \
     default-mysql-client \
     libyaml-dev \
+    libicu-dev \
     curl \
+    bash \
+    bash-completion \
+    vim \
+    nano \
+    less \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install gd mbstring zip pdo pdo_mysql soap intl opcache \
     && pecl install yaml \
-    && docker-php-ext-enable yaml
+    && docker-php-ext-enable yaml \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Node.js and npm
-RUN curl -sL https://deb.nodesource.com/setup_18.x | bash -
-RUN apt-get install -y nodejs
+RUN curl -sL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs
 
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Install Symfony CLI
-RUN curl -sS https://get.symfony.com/cli/installer | bash
-RUN mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
+RUN curl -sS https://get.symfony.com/cli/installer | bash && \
+    mv /root/.symfony*/bin/symfony /usr/local/bin/symfony
+
+# Configure bash with history and useful features
+RUN echo 'export HISTFILESIZE=10000' >> /root/.bashrc && \
+    echo 'export HISTSIZE=10000' >> /root/.bashrc && \
+    echo 'export HISTCONTROL=ignoredups:erasedups' >> /root/.bashrc && \
+    echo 'shopt -s histappend' >> /root/.bashrc && \
+    echo 'alias ll="ls -lah"' >> /root/.bashrc && \
+    echo 'alias sf="php bin/console"' >> /root/.bashrc && \
+    echo 'export TERM=xterm' >> /root/.bashrc
+
+# Set bash as the default shell
+ENV SHELL=/bin/bash
+RUN ln -sf /bin/bash /bin/sh
 
 # Set working directory
 WORKDIR /var/www/html
 
 # Copy application files
 COPY . .
-
-# Install PHP dependencies
-RUN composer install --prefer-dist --no-scripts --no-progress --no-suggest --no-interaction
-
-# Install Node.js dependencies and build assets
-RUN npm install
-RUN npm run build
 
 # Set permissions for entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

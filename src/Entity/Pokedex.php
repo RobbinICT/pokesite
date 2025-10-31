@@ -2,10 +2,10 @@
 
 namespace App\Entity;
 
-use App\Repository\PokemonRepository;
+use App\Repository\PokedexRepository;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: PokemonRepository::class)]
+#[ORM\Entity(repositoryClass: PokedexRepository::class)]
 #[ORM\Table(name: 'pokedex')]
 class Pokedex
 {
