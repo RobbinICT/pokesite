@@ -1,43 +1,143 @@
-body {
-    background-color: skyblue;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Base theme tokens (auto light / dark via prefers-color-scheme)
+   ========================================================================== */
+@layer base {
+    :root {
+        color-scheme: light dark;
+    }
+
+    body {
+        @apply bg-gray-50 text-gray-900 antialiased;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        body {
+            @apply bg-gray-950 text-gray-100;
+        }
+    }
 }
 
-.btn-back-to-top {
-    position:fixed;
-    left: 95%;
-    top:90%;
+/* ==========================================================================
+   Components
+   ========================================================================== */
+@layer components {
+    /* App shell -------------------------------------------------------------- */
+    .app-shell {
+        @apply mx-auto w-full max-w-screen-2xl px-3 sm:px-6 pb-16;
+    }
+
+    /* Sticky header --------------------------------------------------------- */
+    .app-header {
+        @apply sticky top-0 z-30 border-b border-gray-200/70 bg-white/85 backdrop-blur-md
+               dark:border-gray-800/70 dark:bg-gray-950/85;
+    }
+
+    .brand {
+        @apply flex items-center gap-2 font-extrabold tracking-tight text-gray-900 dark:text-white;
+    }
+
+    .brand__mark {
+        @apply grid h-8 w-8 place-items-center rounded-full bg-pokered text-white shadow-sm ring-2 ring-white dark:ring-gray-900;
+    }
+
+    /* Nav tabs -------------------------------------------------------------- */
+    .nav-tabs {
+        @apply flex items-center gap-1 overflow-x-auto no-scrollbar;
+    }
+
+    .nav-tab {
+        @apply whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold text-gray-600
+               transition-colors hover:bg-gray-100 hover:text-gray-900
+               dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
+    }
+
+    .nav-tab--active {
+        @apply bg-pokeblue text-white shadow-sm hover:bg-pokeblue hover:text-white
+               dark:bg-pokeblue dark:hover:bg-pokeblue;
+    }
+
+    /* Search ---------------------------------------------------------------- */
+    .search-field {
+        @apply block w-full rounded-full border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm
+               text-gray-900 placeholder-gray-400 shadow-sm outline-none
+               focus:border-pokeblue focus:ring-2 focus:ring-pokeblue/30
+               dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:placeholder-gray-500;
+    }
+
+    /* Card ------------------------------------------------------------------ */
+    .pk-card {
+        @apply flex flex-col overflow-hidden rounded-xl border border-gray-200 bg-white
+               shadow-sm transition duration-200 hover:-translate-y-1 hover:shadow-lg
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-pokeblue
+               dark:border-gray-800 dark:bg-gray-900;
+    }
+
+    .pk-card__img {
+        @apply aspect-card w-full object-cover;
+    }
+
+    .pk-card__caption {
+        @apply flex flex-col gap-0.5 px-2 py-2 sm:px-3;
+    }
+
+    .pk-card__title {
+        @apply truncate text-sm font-semibold text-gray-900 dark:text-white;
+    }
+
+    .pk-card__subtitle {
+        @apply truncate text-xs text-gray-500 dark:text-gray-400;
+    }
+
+    /* Section header (serie group) ------------------------------------------ */
+    .serie-header {
+        @apply col-span-full mb-1 mt-4 flex items-center gap-3 first:mt-0;
+    }
+
+    .serie-header__label {
+        @apply text-base font-bold tracking-tight text-gray-900 dark:text-white;
+    }
+
+    .serie-header__rule {
+        @apply h-px flex-1 bg-gradient-to-r from-gray-300 to-transparent dark:from-gray-700;
+    }
+
+    /* Loader / sentinel ----------------------------------------------------- */
+    .scroll-loader {
+        @apply flex items-center justify-center py-8;
+    }
+
+    .spinner {
+        @apply h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-pokered
+               dark:border-gray-700 dark:border-t-pokered;
+    }
+
+    /* Back to top ----------------------------------------------------------- */
+    .btn-back-to-top {
+        @apply fixed bottom-5 right-5 z-40 grid h-11 w-11 place-items-center rounded-full
+               bg-pokered text-white shadow-lg transition hover:bg-pokered-dark
+               focus:outline-none focus-visible:ring-2 focus-visible:ring-pokered/50;
+    }
+
+    /* Stat pill ------------------------------------------------------------- */
+    .stat-pill {
+        @apply inline-flex items-center gap-2 rounded-full bg-gray-100 px-4 py-1.5 text-sm
+               font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200;
+    }
 }
 
-.header-button {
-    color: white;
-    background-color: #1d4ed8; /* Equivalent to bg-blue-700 */
-    transition: background-color 0.3s; /* For smooth hover effect */
-    font-weight: 500; /* Equivalent to font-medium */
-    border-radius: 0.5rem; /* Equivalent to rounded-lg */
-    font-size: 0.875rem; /* Equivalent to text-sm */
-    padding: 0.625rem 1.25rem; /* Equivalent to px-5 py-2.5 */
-    margin-right: 0.5rem; /* Equivalent to me-10 */
-    margin-bottom: 0.5rem; /* Equivalent to mb-2 */
-    outline: none; /* Equivalent to focus:outline-none */
-}
-
-.header-button:hover {
-    background-color: #1e40af; /* Equivalent to hover:bg-blue-800 */
-}
-
-.header-button:focus {
-    outline: none; /* Prevent default outline on focus */
-    box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.5); /* Equivalent to focus:ring-4 focus:ring-blue-300 */
-}
-
-.header-button.dark {
-    background-color: #2563eb; /* Equivalent to dark:bg-blue-600 */
-}
-
-.header-button.dark:hover {
-    background-color: #1e3a8a; /* Equivalent to dark:hover:bg-blue-700 */
-}
-
-.header-button.dark:focus {
-    box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.8); /* Equivalent to dark:focus:ring-blue-800 */
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+@layer utilities {
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
 }

@@ -14,6 +14,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class MissingPokemonController extends AbstractController
 {
+    private const BATCH_SIZE = 60;
+
     private EntityManagerInterface $entity_manager;
 
     public function __construct(EntityManagerInterface $entity_manager)
@@ -28,27 +30,48 @@ class MissingPokemonController extends AbstractController
         /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         $exclude_paradox_rift = $config->getIsParadoxRiftExclude();
-        $missing_pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAllMissingPokemon($search_string, $exclude_paradox_rift);
-        $total = \count($missing_pokemon_list);
 
-        $grouped_pokemon = [];
+        $repository = $this->entity_manager->getRepository(MissingPokemon::class);
+        $pokemon = $repository->findAllMissingPokemon($search_string, $exclude_paradox_rift, 0, self::BATCH_SIZE);
+        $total = $repository->countMissingPokemon($search_string, $exclude_paradox_rift);
 
-        foreach ($missing_pokemon_list as $pokemon)
-        {
-            $serie = $pokemon->getSerie();
-            if (!isset($grouped_pokemon[$serie]))
-            {
-                $grouped_pokemon[$serie] = [];
-            }
-            $grouped_pokemon[$serie][] = $pokemon;
-        }
-
-        return $this->render('missing_pokemon/index.html.twig',[
+        return $this->render('missing_pokemon/index.html.twig', [
             'config' => $config,
-            'pokemon' => $grouped_pokemon,
+            'pokemon' => $pokemon,
             'search_string' => $search_string,
             'total' => $total,
+            'batch_size' => self::BATCH_SIZE,
+            'has_more' => \count($pokemon) === self::BATCH_SIZE,
         ]);
+    }
+
+    #[Route(path: '/api/missing', name: 'api_missing_batch')]
+    public function batch(Request $request): Response
+    {
+        $search_string = $request->get('q');
+        $offset = max(0, $request->query->getInt('offset'));
+        $last_serie = (string) $request->get('last_serie', '');
+
+        /** @var Config $config */
+        $config = $this->entity_manager->getRepository(Config::class)->getConfig();
+        $exclude_paradox_rift = $config->getIsParadoxRiftExclude();
+
+        $pokemon = $this->entity_manager->getRepository(MissingPokemon::class)
+            ->findAllMissingPokemon($search_string, $exclude_paradox_rift, $offset, self::BATCH_SIZE);
+
+        $html = $this->renderView('missing_pokemon/_batch.html.twig', [
+            'config' => $config,
+            'pokemon' => $pokemon,
+            'last_serie' => $last_serie,
+        ]);
+
+        $response = new Response($html);
+        $response->headers->set('X-Has-More', \count($pokemon) === self::BATCH_SIZE ? '1' : '0');
+        if (!empty($pokemon)) {
+            $response->headers->set('X-Last-Serie', end($pokemon)->getSerie());
+        }
+
+        return $response;
     }
 
     #[Route(path: '/missing/show/{id}', name: 'show_single_missing_pokemon')]
@@ -68,9 +91,7 @@ class MissingPokemonController extends AbstractController
     #[Route(path: '/missing/unique', name: 'show_unique_missing_pokemon')]
     public function showUniqueMissingPokemon(Request $request): Response
     {
-        $missing = [
-            [ 'id' => 697, 'title' => 'Tyrantrum']
-        ];
+        $missing = [];
 
         $pokemon = [];
         foreach ($missing as $miss)

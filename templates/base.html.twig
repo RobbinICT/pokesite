@@ -1,56 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="UTF-8">
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.8.1/flowbite.min.css" rel="stylesheet" />
-        <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
-        <title>{% block title %}Pokesite{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#EE1515" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+        <title>{% block title %}Robbin's Pokésite{% endblock %}</title>
         {% block stylesheets %}
             {{ encore_entry_link_tags('app') }}
         {% endblock %}
     </head>
 
     <body>
-    <h1 class="flex items-center justify-center mb-4 text-4xl font-extrabold leading-none tracking-tight text-gray-900 md:text-5xl lg:text-6xl dark:text-white">Robbin's Personal Pokesite</h1>
+        {% set current_route = app.request.attributes.get('_route') %}
+        {% set nav = [
+            { route: 'show_final_pokemon',          label: 'Final' },
+            { route: 'show_all_pokemon',            label: 'Complete' },
+            { route: 'show_missing_pokemon',        label: 'Missing' },
+            { route: 'show_unique_missing_pokemon', label: 'Missing unique' }
+        ] %}
+        {% set list_routes = ['show_final_pokemon', 'show_all_pokemon', 'show_missing_pokemon'] %}
+        {% set search_action = current_route in list_routes ? app.request.pathinfo : path('show_all_pokemon') %}
 
-    <div class="flex items-center justify-center">
-        <a href="{{ path('show_final_pokemon') }}">
-            <button type="button" class="header-button">
-                Final list
-            </button>
-        </a>
+        <header class="app-header">
+            <div class="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 px-3 py-3 sm:px-6">
+                <div class="flex items-center gap-3">
+                    <a href="{{ path('show_final_pokemon') }}" class="brand text-lg sm:text-xl">
+                        <span class="brand__mark">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/>
+                                <path d="M3 12h6a3 3 0 1 0 6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                            </svg>
+                        </span>
+                        <span class="hidden sm:inline">Robbin's Pokésite</span>
+                        <span class="sm:hidden">Pokésite</span>
+                    </a>
 
-        <a href="{{ path('show_all_pokemon') }}">
-            <button type="button" class="header-button">
-                Complete list
-            </button>
-        </a>
+                    <div class="relative ml-auto w-full max-w-[14rem] sm:max-w-sm">
+                        <form method="get" action="{{ search_action }}" role="search">
+                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.16 10.03l3.4 3.41a1 1 0 0 0 1.42-1.42l-3.41-3.4A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd"/>
+                                </svg>
+                            </span>
+                            <input name="q" value="{{ search_string|default('') }}" type="search"
+                                   class="search-field" placeholder="Search Pokémon…" aria-label="Search Pokémon">
+                        </form>
+                    </div>
+                </div>
 
-        <a href="{{ path('show_missing_pokemon') }}">
-            <button type="button" class="header-button">
-                Missing
-            </button>
-        </a>
+                <nav class="nav-tabs" aria-label="Collection lists">
+                    {% for item in nav %}
+                        <a href="{{ path(item.route) }}"
+                           class="nav-tab {{ current_route == item.route ? 'nav-tab--active' }}"
+                           {{ current_route == item.route ? 'aria-current="page"' }}>
+                            {{ item.label }}
+                        </a>
+                    {% endfor %}
+                    {% if config.getIsSuperActionsEnabled() == 'true' %}
+                        <a href="{{ path('upload_file') }}" class="nav-tab">Upload</a>
+                    {% endif %}
+                </nav>
+            </div>
+        </header>
 
-        <a href="{{ path('show_unique_missing_pokemon') }}">
-            <button type="button" class="header-button">
-                Missing unique
-            </button>
-        </a>
-    </div>
+        <main class="app-shell pt-5">
+            {% block body %}{% endblock %}
+        </main>
 
-    {% if config.getIsSuperActionsEnabled() == 'true' %}
-        <div class="flex items-center justify-center">
-            <a href="{{ path('upload_file') }}">
-                <button type="button" class="header-button">
-                    Upload file
-                </button>
-            </a>
-        </div>
-    {% endif %}
-        {% block body %}{% endblock %}
+        {% block javascripts %}{% endblock %}
     </body>
-
-    {% block javascripts %}
-    {% endblock %}
 </html>

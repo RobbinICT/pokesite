@@ -7,8 +7,12 @@ use Doctrine\ORM\EntityRepository;
 class PokemonRepository extends EntityRepository
 {
 
-    public function getPokemon(?string $search_term = null, bool $only_show_final_list = false)
-    {
+    public function getPokemon(
+        ?string $search_term = null,
+        bool $only_show_final_list = false,
+        ?int $offset = null,
+        ?int $limit = null
+    ) {
         $qb = $this->createQueryBuilder('q');
 
         if ($search_term) {
@@ -22,10 +26,20 @@ class PokemonRepository extends EntityRepository
                 ->setParameter('f_list', 'F');
         }
 
-        return $qb
-            ->orderBy('q.dex_nr', 'ASC')
-            ->getQuery()
-            ->getResult();
+        // Deterministic ordering: many rows share a dex_nr, so add tie-breakers
+        // to keep offset paging stable across infinite-scroll batches.
+        $qb->orderBy('q.dex_nr', 'ASC')
+            ->addOrderBy('q.serie_nr', 'ASC')
+            ->addOrderBy('q.id', 'ASC');
+
+        if ($offset !== null) {
+            $qb->setFirstResult($offset);
+        }
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
     }
 
     public function getPokemonSerieNumbersBySerie(string $serie_name): array

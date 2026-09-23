@@ -1,0 +1,28 @@
+{#
+    Renders one batch of missing Pokemon cards, inserting a serie section header
+    whenever the serie changes. The `last_serie` cursor seeds the comparison so
+    headers stay correct across infinite-scroll batch boundaries (results are
+    ordered by serie, so each serie's rows are contiguous).
+    Params: config, pokemon (iterable of MissingPokemon), last_serie (string)
+#}
+{% set prev = last_serie|default('') %}
+{% for p in pokemon %}
+    {% if p.serie != prev %}
+        <div class="serie-header">
+            <span class="serie-header__label">{{ p.serie }}</span>
+            <span class="serie-header__rule"></span>
+        </div>
+        {% set prev = p.serie %}
+    {% endif %}
+    {% set img_src = config.getUseLocalCards() == 'true'
+        ? asset('images/missing-pokemon/' ~ p.getUniqueIdentifier()|url_encode ~ '.png')
+        : p.url %}
+    {% include '_components/card.html.twig' with {
+        href: path('show_single_missing_pokemon', { 'id': p.id }),
+        img_src: img_src,
+        alt: p.title,
+        title: p.title,
+        subtitle: '#' ~ p.serie_nr,
+        serie: p.serie,
+    } only %}
+{% endfor %}

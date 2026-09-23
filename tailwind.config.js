@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
+    darkMode: 'media',
     content: [
         "./assets/**/*.js",
         "./templates/**/*.html.twig",
@@ -20,8 +21,23 @@ module.exports = {
                     "800": "#1e40af",
                     "900": "#1e3a8a",
                     "950": "#172554"
-                }
-            }
+                },
+                pokered: {
+                    DEFAULT: "#EE1515",
+                    dark: "#B91414",
+                },
+                pokeblue: {
+                    DEFAULT: "#3B4CCA",
+                    dark: "#2A379A",
+                },
+                pokeyellow: {
+                    DEFAULT: "#FFCB05",
+                    dark: "#E0B100",
+                },
+            },
+            aspectRatio: {
+                card: '63 / 88',
+            },
         },
         fontFamily: {
             'body': [
@@ -59,8 +75,8 @@ module.exports = {
                 'Noto Color Emoji'
             ]
         }
-    }
-[
-    require('flowbite/plugin')
-],
+    },
+    plugins: [
+        require('flowbite/plugin')
+    ],
 }
