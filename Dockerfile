@@ -1,4 +1,5 @@
 FROM php:8.2-fpm
+#FROM php:8.2-fpm AS builder
 
 # Install system dependencies including bash and useful terminal tools
 RUN apt-get update && apt-get install -y \
@@ -48,6 +49,9 @@ RUN echo 'export HISTFILESIZE=10000' >> /root/.bashrc && \
 # Set bash as the default shell
 ENV SHELL=/bin/bash
 RUN ln -sf /bin/bash /bin/sh
+
+#FROM php:8.2-fpm AS runner
+#COPY --from=builder
 
 # Set working directory
 WORKDIR /var/www/html
