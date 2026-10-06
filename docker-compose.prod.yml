@@ -1,10 +1,13 @@
-# Local development stack.
+# Production-like stack using the slim, self-contained `prod` image.
 #
-# The source tree is bind-mounted into the PHP container, so code changes are
-# picked up without rebuilding the image. Dependencies and assets are installed
-# at container start by docker-entrypoint.sh (only when missing).
+# Nothing is bind-mounted: dependencies and compiled assets are baked into the
+# image at build time. The built public/ directory is shared with nginx through
+# a named volume that Docker populates from the image on first start.
 #
-# For a slim, self-contained production image see docker-compose.prod.yml.
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# NOTE: the prod image runs with APP_ENV=prod. Set a real APP_SECRET and
+# DATABASE_URL (e.g. via an .env.prod.local file or the `environment` block).
 
 services:
   web:
@@ -14,7 +17,7 @@ services:
     ports:
       - "1998:80"
     volumes:
-      - ./public:/var/www/html/public:ro
+      - public_assets:/var/www/html/public:ro
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
       - php
@@ -25,11 +28,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      target: dev
+      target: prod
     container_name: symfony_php
     restart: unless-stopped
     volumes:
-      - ./:/var/www/html
+      - public_assets:/var/www/html/public
     networks:
       - symfony
 
@@ -49,6 +52,7 @@ services:
 
 volumes:
   db_data:
+  public_assets:
 
 networks:
   symfony:

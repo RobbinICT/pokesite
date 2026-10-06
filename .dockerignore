@@ -28,3 +28,14 @@ yarn-error.log
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+# Build/dev artifacts that should never enter the image context.
+/.git/
+/.github/
+.DS_Store
+/docker-compose*.yml
+/Dockerfile
+/.dockerignore
+/tests/
+/.env.test
+/.env.*.local
