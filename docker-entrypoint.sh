@@ -19,9 +19,15 @@ if [ ! -d node_modules ]; then
     npm install
 fi
 
-if [ ! -d public/build ]; then
-    echo "> Building assets (run 'npm run watch' for live rebuilds)..."
+# Rebuild assets when they are missing or when any source that feeds the build
+# is newer than the last build, so updated code is never served against a stale
+# bundle. Use 'npm run watch' for live rebuilds while developing.
+if [ ! -f public/build/entrypoints.json ] || \
+   [ -n "$(find assets templates tailwind.config.js postcss.config.js webpack.config.js package.json -newer public/build/entrypoints.json 2>/dev/null | head -1)" ]; then
+    echo "> Building assets..."
     npm run build
+else
+    echo "> Assets up to date, skipping build."
 fi
 
 echo "> Running database migrations..."
