@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Entity\Minifigure;
 use App\Entity\MissingPokemon;
 use App\Entity\Pokemon;
 use Doctrine\ORM\EntityManagerInterface;
@@ -44,6 +45,64 @@ class DatabaseManager
         }
 
         $this->entity_manager->flush();
+    }
+
+    public function importMinifiguresCsv(string $delimiter = ';'): void
+    {
+        $base_dir = $this->kernel->getProjectDir();
+        $path = $base_dir . '/var/minifigures.csv';
+
+        $csv = Reader::createFromPath($path, 'r');
+        $csv->setDelimiter($delimiter);
+        $csv->setHeaderOffset(0);
+
+        foreach ($csv as $row) {
+            $minifigure = new Minifigure($row['Identifier'], $row['Series'], $row['Name']);
+            if (!empty($row['Url'])) {
+                $minifigure->setUrl($row['Url']);
+            }
+            $this->entity_manager->persist($minifigure);
+        }
+
+        $this->entity_manager->flush();
+    }
+
+    /**
+     * Fills in missing image URLs for minifigures by scraping the BrickLink
+     * catalog page's og:image meta tag. Returns a report keyed by outcome.
+     */
+    public function scrapeMinifigureImages(): array
+    {
+        $report = ['updated' => [], 'failed' => []];
+        $minifigures = $this->entity_manager->getRepository(Minifigure::class)->getMinifiguresWithoutUrl();
+        $client = HttpClient::create([
+            'headers' => [
+                // BrickLink blocks non-browser clients; present a browser UA.
+                'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36',
+            ],
+        ]);
+
+        foreach ($minifigures as $minifigure) {
+            try {
+                $response = $client->request('GET', $minifigure->getBricklinkUrl());
+                $content = $response->getContent();
+                $crawler = new Crawler($content);
+                $image_node = $crawler->filterXPath('//meta[@property="og:image"]');
+                if ($image_node->count() === 0) {
+                    $report['failed'][] = $minifigure->getIdentifier();
+                    continue;
+                }
+                $minifigure->setUrl($image_node->attr('content'));
+                $this->entity_manager->persist($minifigure);
+                $report['updated'][] = $minifigure->getIdentifier();
+            } catch (\Throwable $e) {
+                $report['failed'][] = $minifigure->getIdentifier();
+            }
+        }
+
+        $this->entity_manager->flush();
+
+        return $report;
     }
 
     public function addMissingPokemon(): array

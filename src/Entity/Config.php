@@ -26,12 +26,16 @@ class Config
     #[ORM\Column]
     private bool $is_in_alphabetical_order = false;
 
+    #[ORM\Column]
+    private bool $is_use_local_minifigures = true;
+
     public function __construct()
     {
         $this->is_super_actions_enabled = false;
         $this->is_paradox_rift_exclude = false;
         $this->is_use_local_cards = true;
         $this->is_in_alphabetical_order = false;
+        $this->is_use_local_minifigures = true;
     }
 
     public function getId(): int
@@ -77,5 +81,15 @@ class Config
     public function setIsInAlphabeticalOrder(bool $is_in_alphabetical_order): void
     {
         $this->is_in_alphabetical_order = $is_in_alphabetical_order;
+    }
+
+    public function getUseLocalMinifigures(): bool
+    {
+        return $this->is_use_local_minifigures;
+    }
+
+    public function setUseLocalMinifigures(bool $is_use_local_minifigures): void
+    {
+        $this->is_use_local_minifigures = $is_use_local_minifigures;
     }
 }

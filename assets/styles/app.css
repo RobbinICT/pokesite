@@ -80,6 +80,12 @@
         @apply aspect-card w-full object-cover;
     }
 
+    /* Portrait tile for product shots (e.g. LEGO minifigures). Compound
+       selector outranks the default aspect-card/object-cover utilities. */
+    .pk-card__img.pk-card__img--figure {
+        @apply aspect-[3/4] object-contain bg-white p-1 dark:bg-gray-900;
+    }
+
     .pk-card__caption {
         @apply flex flex-col gap-0.5 px-2 py-2 sm:px-3;
     }

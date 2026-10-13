@@ -17,9 +17,10 @@
             { route: 'show_final_pokemon',          label: 'Final' },
             { route: 'show_all_pokemon',            label: 'Complete' },
             { route: 'show_missing_pokemon',        label: 'Missing' },
-            { route: 'show_unique_missing_pokemon', label: 'Missing unique' }
+            { route: 'show_unique_missing_pokemon', label: 'Missing unique' },
+            { route: 'show_lego_minifigures',       label: 'LEGO' }
         ] %}
-        {% set list_routes = ['show_final_pokemon', 'show_all_pokemon', 'show_missing_pokemon'] %}
+        {% set list_routes = ['show_final_pokemon', 'show_all_pokemon', 'show_missing_pokemon', 'show_lego_minifigures'] %}
         {% set search_action = current_route in list_routes ? app.request.pathinfo : path('show_all_pokemon') %}
 
         <header class="app-header">

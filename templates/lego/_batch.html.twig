@@ -1,0 +1,19 @@
+{#
+    Renders one batch of LEGO minifigure cards. Used for both the initial page
+    render and incremental infinite-scroll fetches.
+    Params: config, minifigures (iterable of Minifigure)
+#}
+{% for m in minifigures %}
+    {% set img_src = config.getUseLocalMinifigures() == 'true'
+        ? asset('images/lego/' ~ m.identifier|url_encode ~ '.png')
+        : m.url %}
+    {% include '_components/card.html.twig' with {
+        href: m.getBricklinkUrl(),
+        target: '_blank',
+        img_src: img_src,
+        img_class: 'pk-card__img--figure',
+        alt: m.name,
+        title: m.name,
+        subtitle: m.series ~ ' · ' ~ m.identifier,
+    } only %}
+{% endfor %}
