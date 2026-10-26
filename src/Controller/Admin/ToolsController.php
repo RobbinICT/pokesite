@@ -167,7 +167,7 @@ class ToolsController extends AbstractController
         try
         {
             // One transaction: a failed import never leaves you with an emptied collection.
-            $message = $this->entity_manager->wrapInTransaction(fn () => match ($key) {
+            [$message, $imported] = $this->entity_manager->wrapInTransaction(fn () => match ($key) {
                 'cards' => $this->importCards($delimiter, $replace),
                 'minifigures' => $this->importMinifigures($delimiter, $replace),
             });
@@ -179,14 +179,15 @@ class ToolsController extends AbstractController
 
         $this->addFlash('success', $message);
         // Downloading can take minutes for a big import, so it runs in the background.
-        if ($key === 'minifigures' && $this->task_runner->start('minifigure_downloads'))
+        if ($key === 'minifigures' && $imported > 0 && $this->task_runner->start('minifigure_downloads'))
         {
             $this->addFlash('success', 'Downloading the minifigure images in the background. You can follow it below.');
         }
         return null;
     }
 
-    private function importCards(string $delimiter, bool $replace): string
+    /** @return array{0: string, 1: int} message and number of imported cards */
+    private function importCards(string $delimiter, bool $replace): array
     {
         if ($replace)
         {
@@ -194,10 +195,11 @@ class ToolsController extends AbstractController
         }
         $imported = $this->database_manager->importCsvFile($delimiter);
 
-        return sprintf('%s %d card%s.', $replace ? 'Replaced the collection with' : 'Imported', $imported, $imported === 1 ? '' : 's');
+        return [sprintf('%s %d card%s.', $replace ? 'Replaced the collection with' : 'Imported', $imported, $imported === 1 ? '' : 's'), $imported];
     }
 
-    private function importMinifigures(string $delimiter, bool $replace): string
+    /** @return array{0: string, 1: int} message and number of imported minifigures */
+    private function importMinifigures(string $delimiter, bool $replace): array
     {
         if ($replace)
         {
@@ -211,6 +213,6 @@ class ToolsController extends AbstractController
         {
             $message .= sprintf(' Skipped %d already in your collection.', $skipped);
         }
-        return $message;
+        return [$message, $report['imported']];
     }
 }

@@ -1,12 +1,14 @@
 {% extends 'admin/layout.html.twig' %}
 
 {#
-    Params: collectable, rows (list of {id, cells, title, subtitle, badge, image}),
-            search, sort, dir, page, pages, total
+    Params: collectable, rows (list of {id, cells, title, subtitle, badge, image, has_url}),
+            search, sort, dir, filters ({key: {label, choices}}), active_filters ({key: value}),
+            page, pages, total
 #}
 
 {% set return_url = app.request.requestUri %}
-{% set list_params = { type: collectable.key, q: search ?: null, sort: sort, dir: dir } %}
+{% set list_params = { type: collectable.key, q: search ?: null, f: active_filters ?: null, sort: sort, dir: dir } %}
+{% set narrowed = search or active_filters %}
 {% set placeholder = asset('images/placeholder/card_placeholder.png') %}
 
 {% macro actions(collectable, row, return_url) %}
@@ -14,6 +16,14 @@
        class="icon-btn" title="Edit" aria-label="Edit {{ row.title }}">
         <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.83 2.83 0 0 0-4-4L4 16v4zM13.5 6.5l4 4"/></svg>
     </a>
+    <form method="post" action="{{ path('admin_redownload', { type: collectable.key, id: row.id }) }}" class="contents">
+        <input type="hidden" name="_token" value="{{ csrf_token('image-' ~ collectable.key ~ '-' ~ row.id) }}">
+        <input type="hidden" name="_return" value="{{ return_url }}">
+        <button type="submit" class="icon-btn" {{ row.has_url ? '' : 'disabled' }}
+                title="{{ row.has_url ? 'Download image again' : 'No image URL' }}" aria-label="Download the image of {{ row.title }} again" data-redownload>
+            <svg class="h-[18px] w-[18px]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-4M4 4v4h4M4 13a8 8 0 0 0 14.9 4M20 20v-4h-4"/></svg>
+        </button>
+    </form>
     <button type="button" class="icon-btn icon-btn--danger" title="Delete" aria-label="Delete {{ row.title }}"
             data-delete-action="{{ path('admin_delete', { type: collectable.key, id: row.id }) }}"
             data-delete-token="{{ csrf_token('delete-' ~ collectable.key ~ '-' ~ row.id) }}"
@@ -32,14 +42,23 @@
         <div class="mr-auto">
             <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">{{ collectable.label }}</h1>
             <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                {% if search %}
-                    {{ total }} result{{ total == 1 ? '' : 's' }} for <span class="font-semibold text-gray-800 dark:text-gray-200">"{{ search }}"</span>
+                {% if narrowed %}
+                    {{ total }} result{{ total == 1 ? '' : 's' }}
+                    {%- if search %} for <span class="font-semibold text-gray-800 dark:text-gray-200">"{{ search }}"</span>{% endif %}
+                    {%- if active_filters %} with {{ active_filters|length }} filter{{ active_filters|length == 1 ? '' : 's' }}{% endif %}
                     · <a href="{{ path('admin_list', { type: collectable.key }) }}" class="font-semibold text-pokeblue hover:underline dark:text-blue-400">Clear</a>
                 {% else %}
                     {{ total|number_format(0, ',', '.') }} {{ total == 1 ? collectable.itemLabel : collectable.label|lower }}
                 {% endif %}
             </p>
         </div>
+        {% if total > 0 %}
+            <a href="{{ path('admin_export', list_params|merge({ page: null })) }}" class="btn btn--ghost" download
+               title="CSV in the same format as the import in Tools">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+                {{ narrowed ? 'Export ' ~ total : 'Export CSV' }}
+            </a>
+        {% endif %}
         <a href="{{ path('admin_new', { type: collectable.key, return: return_url }) }}" class="btn btn--primary">
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
             Add {{ collectable.itemLabel }}
@@ -47,14 +66,29 @@
     </div>
 
     {# Search ------------------------------------------------------------ #}
-    <form method="get" action="{{ path('admin_list', { type: collectable.key }) }}" role="search" class="relative mb-4 max-w-md">
-        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.16 10.03l3.4 3.41a1 1 0 0 0 1.42-1.42l-3.41-3.4A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd"/>
-            </svg>
-        </span>
-        <input type="search" name="q" value="{{ search }}" class="search-field pr-12" placeholder="Search {{ collectable.label|lower }}…" aria-label="Search {{ collectable.label|lower }}" data-search-input>
-        <kbd class="pointer-events-none absolute inset-y-0 right-3 my-auto hidden h-6 items-center rounded border border-gray-200 px-1.5 font-sans text-xs text-gray-400 sm:flex dark:border-gray-700">/</kbd>
+    <form method="get" action="{{ path('admin_list', { type: collectable.key }) }}" role="search" class="mb-4 flex flex-wrap items-center gap-2">
+        <div class="relative w-full max-w-md">
+            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.16 10.03l3.4 3.41a1 1 0 0 0 1.42-1.42l-3.41-3.4A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd"/>
+                </svg>
+            </span>
+            <input type="search" name="q" value="{{ search }}" class="search-field pr-12" placeholder="Search {{ collectable.label|lower }}…" aria-label="Search {{ collectable.label|lower }}" data-search-input>
+            <kbd class="pointer-events-none absolute inset-y-0 right-3 my-auto hidden h-6 items-center rounded border border-gray-200 px-1.5 font-sans text-xs text-gray-400 sm:flex dark:border-gray-700">/</kbd>
+        </div>
+        {% for key, filter in filters %}
+            {% set value = active_filters[key] ?? '' %}
+            <select name="f[{{ key }}]" class="admin-input filter-select {{ value is not same as('') ? 'filter-select--active' }}"
+                    aria-label="Filter by {{ filter.label|lower }}" data-filter>
+                <option value="">{{ filter.label }}: all</option>
+                {% for choice, label in filter.choices %}
+                    <option value="{{ choice }}" {{ value == choice ? 'selected' }}>{{ filter.label }}: {{ label }}</option>
+                {% endfor %}
+            </select>
+        {% endfor %}
+        {% if active_filters %}
+            <a href="{{ path('admin_list', list_params|merge({ f: null, page: null })) }}" class="text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">Clear filters</a>
+        {% endif %}
         <input type="hidden" name="sort" value="{{ sort }}">
         <input type="hidden" name="dir" value="{{ dir }}">
     </form>
@@ -65,9 +99,9 @@
             <span class="mb-4 grid h-14 w-14 place-items-center rounded-full bg-gray-100 text-gray-400 dark:bg-gray-800">
                 <svg class="h-7 w-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ collectable.icon|raw }}</svg>
             </span>
-            {% if search %}
-                <h2 class="text-lg font-semibold">Nothing matches "{{ search }}"</h2>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Try a different name, serie or identifier.</p>
+            {% if narrowed %}
+                <h2 class="text-lg font-semibold">Nothing matches{{ search ? ' "' ~ search ~ '"' }}</h2>
+                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Try a different search or other filters.</p>
             {% else %}
                 <h2 class="text-lg font-semibold">No {{ collectable.label|lower }} yet</h2>
                 <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Add your first {{ collectable.itemLabel }} to get started.</p>
@@ -80,6 +114,7 @@
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th class="w-8"><input type="checkbox" class="admin-checkbox" aria-label="Select all on this page" data-select-all></th>
                         <th class="w-14"><span class="sr-only">Image</span></th>
                         {% for key, column in collectable.columns %}
                             <th scope="col" {% if sort == key %}aria-sort="{{ dir == 'asc' ? 'ascending' : 'descending' }}"{% endif %}>
@@ -96,12 +131,13 @@
                                 {% endif %}
                             </th>
                         {% endfor %}
-                        <th class="w-24 text-right"><span class="sr-only">Actions</span></th>
+                        <th class="w-32 text-right"><span class="sr-only">Actions</span></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for row in rows %}
                         <tr>
+                            <td><input type="checkbox" class="admin-checkbox" value="{{ row.id }}" aria-label="Select {{ row.title }}" data-select-row data-title="{{ row.title }}"></td>
                             <td>
                                 <img class="thumb" src="{{ row.image ?: placeholder }}" alt="" loading="lazy"
                                      onerror="this.onerror=null; this.src='{{ placeholder }}';">
@@ -130,6 +166,7 @@
         <ul class="admin-panel divide-y divide-gray-100 sm:hidden dark:divide-gray-800">
             {% for row in rows %}
                 <li class="flex items-center gap-3 px-3 py-2.5">
+                    <input type="checkbox" class="admin-checkbox" value="{{ row.id }}" aria-label="Select {{ row.title }}" data-select-row data-title="{{ row.title }}">
                     <img class="thumb" src="{{ row.image ?: placeholder }}" alt="" loading="lazy"
                          onerror="this.onerror=null; this.src='{{ placeholder }}';">
                     <a href="{{ path('admin_edit', { type: collectable.key, id: row.id, return: return_url }) }}" class="min-w-0 flex-1">
@@ -163,6 +200,18 @@
         {% endif %}
     {% endif %}
 
+    {# Bulk actions bar, shown while rows are selected ---------------------- #}
+    <div class="bulk-bar" role="region" aria-label="Selection" data-bulk-bar hidden>
+        <span class="font-semibold" data-bulk-count></span>
+        <button type="button" class="text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white" data-bulk-clear>Clear</button>
+        <button type="button" class="btn btn--danger py-1.5" data-delete-bulk
+                data-delete-action="{{ path('admin_bulk_delete', { type: collectable.key }) }}"
+                data-delete-token="{{ csrf_token('bulk-delete-' ~ collectable.key) }}">
+            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+            Delete
+        </button>
+    </div>
+
     {% include 'admin/_delete_modal.html.twig' with { collectable: collectable, return_url: return_url } only %}
 {% endblock %}
 
@@ -176,5 +225,60 @@
                 document.querySelector('[data-search-input]').focus();
             }
         });
+
+        // Filters apply immediately; unset ones are left out of the URL.
+        document.querySelectorAll('[data-filter]').forEach((select) => {
+            select.addEventListener('change', () => select.form.requestSubmit());
+            select.form.addEventListener('submit', () => { select.disabled = select.value === ''; });
+            // Coming back via the back button restores the page as it was submitted.
+            window.addEventListener('pageshow', () => { select.disabled = false; });
+        });
+
+        // Show a spinner state while an image is downloaded again.
+        document.querySelectorAll('[data-redownload]').forEach((button) => {
+            button.form.addEventListener('submit', () => {
+                button.disabled = true;
+                button.classList.add('animate-spin');
+            });
+        });
+
+        // Row selection + bulk bar. Desktop and phone layouts each have a
+        // checkbox per row; they are kept in sync by value.
+        (function () {
+            const bar = document.querySelector('[data-bulk-bar]');
+            const count = bar.querySelector('[data-bulk-count]');
+            const selectAll = document.querySelector('[data-select-all]');
+            const boxes = [...document.querySelectorAll('[data-select-row]')];
+            const selected = new Map(); // id => title
+
+            const render = () => {
+                boxes.forEach((box) => { box.checked = selected.has(box.value); });
+                bar.hidden = selected.size === 0;
+                count.textContent = selected.size + ' selected';
+                if (selectAll) {
+                    const total = new Set(boxes.map((box) => box.value)).size;
+                    selectAll.checked = selected.size > 0 && selected.size === total;
+                    selectAll.indeterminate = selected.size > 0 && selected.size < total;
+                }
+                bar.querySelector('[data-delete-bulk]').dataset.deleteIds = JSON.stringify([...selected.keys()]);
+                bar.querySelector('[data-delete-bulk]').dataset.deleteTitles = JSON.stringify([...selected.values()]);
+            };
+
+            boxes.forEach((box) => box.addEventListener('change', () => {
+                box.checked ? selected.set(box.value, box.dataset.title) : selected.delete(box.value);
+                render();
+            }));
+            if (selectAll) {
+                selectAll.addEventListener('change', () => {
+                    boxes.forEach((box) => selectAll.checked ? selected.set(box.value, box.dataset.title) : selected.delete(box.value));
+                    render();
+                });
+            }
+            bar.querySelector('[data-bulk-clear]').addEventListener('click', () => { selected.clear(); render(); });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && selected.size && !document.querySelector('dialog[open]')) { selected.clear(); render(); }
+            });
+            render();
+        })();
     </script>
 {% endblock %}

@@ -6,6 +6,7 @@ use App\Admin\CollectableType;
 use App\Entity\Config;
 use App\Entity\Minifigure;
 use App\Form\Admin\MinifigureFormType;
+use App\Service\DatabaseManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
@@ -55,13 +56,37 @@ class MinifigureType implements CollectableType
 
     public function getFormOptions(): array
     {
-        $rows = $this->entity_manager->getRepository(Minifigure::class)->createQueryBuilder('e')
-            ->select('DISTINCT e.series AS value')
-            ->orderBy('value', 'ASC')
-            ->getQuery()
-            ->getScalarResult();
+        return ['series_suggestions' => $this->getSeries()];
+    }
 
-        return ['series_suggestions' => array_column($rows, 'value')];
+    public function getFilters(): array
+    {
+        $series = $this->getSeries();
+
+        return [
+            'series' => ['label' => 'Series', 'choices' => array_combine($series, $series)],
+            'identifier' => ['label' => 'Identifier', 'choices' => ['temp' => 'Temporary', 'bricklink' => 'BrickLink']],
+        ];
+    }
+
+    public function applyFilter(QueryBuilder $qb, string $key, string $value): void
+    {
+        match ($key) {
+            'series' => $qb->andWhere('e.series = :f_series')->setParameter('f_series', $value),
+            'identifier' => $qb->andWhere($value === 'temp' ? 'e.identifier LIKE :f_temp' : 'e.identifier NOT LIKE :f_temp')
+                ->setParameter('f_temp', Minifigure::TEMPORARY_PREFIX.'%'),
+        };
+    }
+
+    public function getCsvColumns(): array
+    {
+        return [...DatabaseManager::MINIFIGURES_CSV_COLUMNS, 'Url'];
+    }
+
+    /** @param Minifigure $item */
+    public function toCsvRow(object $item): array
+    {
+        return [$item->getIdentifier(), $item->getSeries(), $item->getName(), $item->getUrl()];
     }
 
     public function getColumns(): array
@@ -192,5 +217,17 @@ class MinifigureType implements CollectableType
     public function usesLocalImages(): bool
     {
         return $this->entity_manager->getRepository(Config::class)->getConfig()?->getUseLocalMinifigures() ?? true;
+    }
+
+    /** @return string[] */
+    private function getSeries(): array
+    {
+        $rows = $this->entity_manager->getRepository(Minifigure::class)->createQueryBuilder('e')
+            ->select('DISTINCT e.series AS value')
+            ->orderBy('value', 'ASC')
+            ->getQuery()
+            ->getScalarResult();
+
+        return array_column($rows, 'value');
     }
 }

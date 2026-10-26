@@ -51,6 +51,22 @@ interface CollectableType
     /** Narrows the list query (alias "e") to items matching the search term */
     public function applySearch(QueryBuilder $qb, string $search): void;
 
+    /**
+     * List filters (dropdowns), keyed by filter name. An "image" filter is
+     * added by the controller for every type.
+     * @return array<string, array{label: string, choices: array<string, string>}> choices map value => label
+     */
+    public function getFilters(): array;
+
+    /** Narrows the list query (alias "e") for a validated filter value */
+    public function applyFilter(QueryBuilder $qb, string $key, string $value): void;
+
+    /** CSV export header, the same columns the Tools import reads */
+    public function getCsvColumns(): array;
+
+    /** @return array<int, string|int|null> values in getCsvColumns() order */
+    public function toCsvRow(object $item): array;
+
     /** @return array<string, string|int|null> cell values keyed like getColumns() */
     public function getCells(object $item): array;
 

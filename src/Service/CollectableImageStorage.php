@@ -87,6 +87,27 @@ class CollectableImageStorage
         return null;
     }
 
+    public function hasLocalImage(CollectableType $type, object $item): bool
+    {
+        return is_file($this->public_dir.$type->getLocalImagePath($item));
+    }
+
+    /**
+     * Downloads the image again, replacing the local file.
+     *
+     * @return string|null an error for the user, or null on success
+     */
+    public function redownload(CollectableType $type, object $item): ?string
+    {
+        $url = $type->getImageUrl($item);
+        if (!$url)
+        {
+            return 'there is no image URL.';
+        }
+
+        return $this->download($url, $type->getLocalImagePath($item));
+    }
+
     /**
      * Downloads the image when there is a URL but no local file yet (bulk imports).
      *

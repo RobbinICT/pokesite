@@ -23,6 +23,17 @@
         <h1 class="mr-auto text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">
             {{ is_new ? 'Add ' ~ collectable.itemLabel : item_title }}
         </h1>
+        {% if not is_new and collectable.imageUrl(item) %}
+            <form method="post" action="{{ path('admin_redownload', { type: collectable.key, id: item.id }) }}">
+                <input type="hidden" name="_token" value="{{ csrf_token('image-' ~ collectable.key ~ '-' ~ item.id) }}">
+                <input type="hidden" name="_return" value="{{ return_url }}">
+                <input type="hidden" name="_stay" value="1">
+                <button type="submit" class="btn btn--ghost" title="Download the image from the saved URL again">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-4M4 4v4h4M4 13a8 8 0 0 0 14.9 4M20 20v-4h-4"/></svg>
+                    Re-download image
+                </button>
+            </form>
+        {% endif %}
         {% if not is_new %}
             <button type="button" class="btn btn--ghost text-pokered dark:text-red-400"
                     data-delete-action="{{ path('admin_delete', { type: collectable.key, id: item.id }) }}"

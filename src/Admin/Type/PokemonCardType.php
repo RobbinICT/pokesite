@@ -6,6 +6,7 @@ use App\Admin\CollectableType;
 use App\Entity\Config;
 use App\Entity\Pokemon;
 use App\Form\Admin\PokemonCardFormType;
+use App\Service\DatabaseManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\QueryBuilder;
 
@@ -81,6 +82,36 @@ class PokemonCardType implements CollectableType
     {
         $qb->andWhere('LOWER(e.name) LIKE LOWER(:search) OR LOWER(e.serie) LIKE LOWER(:search)')
             ->setParameter('search', '%'.$search.'%');
+    }
+
+    public function getFilters(): array
+    {
+        $serie = $this->getDistinctValues('serie');
+        $list = $this->getDistinctValues('list');
+
+        return [
+            'serie' => ['label' => 'Serie', 'choices' => array_combine($serie, $serie)],
+            'list' => ['label' => 'List', 'choices' => array_combine($list, $list)],
+        ];
+    }
+
+    public function applyFilter(QueryBuilder $qb, string $key, string $value): void
+    {
+        match ($key) {
+            'serie' => $qb->andWhere('e.serie = :f_serie')->setParameter('f_serie', $value),
+            'list' => $qb->andWhere('e.list = :f_list')->setParameter('f_list', $value),
+        };
+    }
+
+    public function getCsvColumns(): array
+    {
+        return DatabaseManager::CARDS_CSV_COLUMNS;
+    }
+
+    /** @param Pokemon $item */
+    public function toCsvRow(object $item): array
+    {
+        return [$item->getDexNr(), $item->getName(), $item->getGen(), $item->getSerie(), $item->getSerieNr(), $item->getList(), $item->getUrl()];
     }
 
     /** @param Pokemon $item */

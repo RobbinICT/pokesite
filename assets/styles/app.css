@@ -261,6 +261,29 @@
         @apply border-pokered focus:border-pokered focus:ring-pokered/30 dark:border-red-500;
     }
 
+    /* Compact select for list filters; highlighted while a filter is active */
+    .filter-select {
+        @apply w-auto max-w-[12rem] cursor-pointer rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-600
+               dark:text-gray-300;
+    }
+
+    .filter-select--active {
+        @apply border-pokeblue bg-pokeblue/5 text-pokeblue dark:border-blue-400 dark:bg-pokeblue/15 dark:text-blue-300;
+    }
+
+    .admin-checkbox {
+        @apply h-4 w-4 cursor-pointer rounded border-gray-300 text-pokeblue accent-pokeblue focus:ring-2 focus:ring-pokeblue/40
+               dark:border-gray-600 dark:bg-gray-950;
+    }
+
+    /* Floating bar shown while list rows are selected */
+    .bulk-bar {
+        @apply fixed inset-x-0 z-30 mx-auto flex w-fit max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full
+               border border-gray-200 bg-white py-2 pl-5 pr-2 text-sm shadow-xl
+               dark:border-gray-700 dark:bg-gray-900;
+        bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
     .admin-label {
         @apply mb-1.5 block text-sm font-semibold text-gray-800 dark:text-gray-200;
     }
