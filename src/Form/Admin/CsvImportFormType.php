@@ -6,12 +6,13 @@ use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints as Assert;
 
 /**
- * Upload a cards CSV and import it (see DatabaseManager::importCsvFile()).
+ * Upload a CSV and import it (cards or minifigures, see ToolsController).
  */
-class CardsImportFormType extends AbstractType
+class CsvImportFormType extends AbstractType
 {
     public const MODE_ADD = 'add';
     public const MODE_REPLACE = 'replace';
@@ -19,7 +20,7 @@ class CardsImportFormType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('cards_file', FileType::class, [
+            ->add('file', FileType::class, [
                 'label' => 'CSV file',
                 'row_attr' => ['class' => 'sm:col-span-2'],
                 'attr' => ['accept' => '.csv,text/csv'],
@@ -45,7 +46,7 @@ class CardsImportFormType extends AbstractType
                 'label' => 'Mode',
                 'choices' => [
                     'Add to collection' => self::MODE_ADD,
-                    'Replace all cards' => self::MODE_REPLACE,
+                    $options['replace_label'] => self::MODE_REPLACE,
                 ],
                 'data' => self::MODE_ADD,
                 'constraints' => [new Assert\NotBlank()],
@@ -57,8 +58,16 @@ class CardsImportFormType extends AbstractType
                     'Comma ( , )' => ',',
                     'Tab' => "\t",
                 ],
-                'data' => ';',
+                'data' => $options['default_delimiter'],
                 'constraints' => [new Assert\NotBlank()],
             ]);
+    }
+
+    public function configureOptions(OptionsResolver $resolver): void
+    {
+        $resolver->setDefaults([
+            'replace_label' => 'Replace everything',
+            'default_delimiter' => ';',
+        ]);
     }
 }

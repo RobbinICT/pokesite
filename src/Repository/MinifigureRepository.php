@@ -47,6 +47,15 @@ class MinifigureRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /** @return string[] */
+    public function getIdentifiers(): array
+    {
+        return $this->createQueryBuilder('q')
+            ->select('q.identifier')
+            ->getQuery()
+            ->getSingleColumnResult();
+    }
+
     public function clearMinifigures()
     {
         return $this->createQueryBuilder('q')

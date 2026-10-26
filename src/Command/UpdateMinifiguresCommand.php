@@ -61,8 +61,13 @@ class UpdateMinifiguresCommand extends Command
                 // no break: fall through to import the CSV
             case 'add':
                 $io->note('Adding minifigures.csv to existing data');
-                $this->database_manager->importMinifiguresCsv($delimiter);
-                break;
+                $report = $this->database_manager->importMinifiguresCsv($delimiter);
+                $io->success(sprintf('Imported %d minifigure(s)', $report['imported']));
+                if (!empty($report['skipped']))
+                {
+                    $io->note(sprintf('Skipped %d already in the database: %s', \count($report['skipped']), implode(', ', $report['skipped'])));
+                }
+                return 0;
             case 'fill-images':
             case 'scrape-images': // old name
                 $io->note('Filling in missing minifigure image URLs from BrickLink');

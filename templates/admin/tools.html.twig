@@ -1,10 +1,9 @@
 {% extends 'admin/layout.html.twig' %}
 
 {#
-    Params: import_form, tasks (list of {key, label, description, status {state, started_at, finished_at, output}})
+    Params: imports (list of {key, title, columns, optional_columns, replace_label, replace_text, form}),
+            tasks (list of {key, label, description, status {state, started_at, finished_at, output}})
 #}
-
-{% form_theme import_form 'admin/_form_theme.html.twig' %}
 
 {% set state_labels = { idle: 'Never run', running: 'Running…', success: 'Done', failed: 'Failed' } %}
 
@@ -17,29 +16,36 @@
     </div>
 
     <div class="grid max-w-5xl items-start gap-5 xl:grid-cols-2">
-        {# Import cards CSV ---------------------------------------------------- #}
-        <section class="admin-panel xl:row-span-2">
-            {{ form_start(import_form, { attr: { novalidate: 'novalidate', 'data-import-form': true } }) }}
-                <div class="p-5">
-                    <h2 class="text-base font-bold">Import cards CSV</h2>
-                    <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                        Columns: <code class="font-mono text-xs">{{ constant('App\\Service\\DatabaseManager::CARDS_CSV_COLUMNS')|join(', ') }}</code>
-                    </p>
-                    <div class="mt-4 grid gap-x-4 gap-y-5 sm:grid-cols-2">
-                        {{ form_errors(import_form) }}
-                        {% for child in import_form %}
-                            {% if child.vars.name != '_token' %}{{ form_row(child) }}{% endif %}
-                        {% endfor %}
+        {# CSV imports ----------------------------------------------------------- #}
+        {% for import in imports %}
+            {% set import_form = import.form %}
+            {% form_theme import_form 'admin/_form_theme.html.twig' %}
+            <section class="admin-panel">
+                {{ form_start(import_form, { attr: { novalidate: 'novalidate', 'data-import-form': true, 'data-replace-title': import.replace_label ~ '?', 'data-replace-text': import.replace_text } }) }}
+                    <div class="p-5">
+                        <h2 class="text-base font-bold">{{ import.title }}</h2>
+                        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
+                            Columns: <code class="font-mono text-xs">{{ import.columns|join(', ') }}</code>
+                            {% if import.optional_columns %}
+                                <span class="whitespace-nowrap">(optional: <code class="font-mono text-xs">{{ import.optional_columns|join(', ') }}</code>)</span>
+                            {% endif %}
+                        </p>
+                        <div class="mt-4 grid gap-x-4 gap-y-5 sm:grid-cols-2">
+                            {{ form_errors(import_form) }}
+                            {% for child in import_form %}
+                                {% if child.vars.name != '_token' %}{{ form_row(child) }}{% endif %}
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
-                <div class="flex justify-end rounded-b-xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
-                    <button type="submit" class="btn btn--primary">
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-                        Import
-                    </button>
-                </div>
-            {{ form_end(import_form) }}
-        </section>
+                    <div class="flex justify-end rounded-b-xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
+                        <button type="submit" class="btn btn--primary">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+                            Import
+                        </button>
+                    </div>
+                {{ form_end(import_form) }}
+            </section>
+        {% endfor %}
 
         {# Background tasks ----------------------------------------------------- #}
         {% for task in tasks %}
@@ -76,13 +82,11 @@
         {% endfor %}
     </div>
 
-    {# Confirmation before replacing all cards #}
+    {# Confirmation before a "replace" import; the text comes from the form submitted #}
     <dialog id="replace-dialog" class="admin-dialog" aria-labelledby="replace-dialog-title">
         <div class="p-5">
-            <h2 id="replace-dialog-title" class="text-base font-bold">Replace all cards?</h2>
-            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
-                Every Pokémon card in your collection is deleted and replaced by the cards in this CSV. Images on disk are kept.
-            </p>
+            <h2 id="replace-dialog-title" class="text-base font-bold" data-replace-title></h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400" data-replace-text></p>
         </div>
         <div class="flex justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
             <button type="button" class="btn btn--ghost" data-replace-cancel autofocus>Cancel</button>
@@ -94,22 +98,27 @@
 {% block javascripts %}
     <script>
         (function () {
-            // Confirm "Replace all cards" before submitting ----------------------
-            const form = document.querySelector('[data-import-form]');
+            // Confirm a "replace" import before submitting ----------------------
             const dialog = document.getElementById('replace-dialog');
+            let pending = null;
             let confirmed = false;
-            form.addEventListener('submit', (e) => {
-                const mode = form.querySelector('select[name$="[mode]"]');
-                if (mode.value === '{{ constant('App\\Form\\Admin\\CardsImportFormType::MODE_REPLACE') }}' && !confirmed) {
-                    e.preventDefault();
-                    dialog.showModal();
-                }
+            document.querySelectorAll('[data-import-form]').forEach((form) => {
+                form.addEventListener('submit', (e) => {
+                    const mode = form.querySelector('select[name$="[mode]"]');
+                    if (mode.value === '{{ constant('App\\Form\\Admin\\CsvImportFormType::MODE_REPLACE') }}' && !confirmed) {
+                        e.preventDefault();
+                        pending = form;
+                        dialog.querySelector('[data-replace-title]').textContent = form.dataset.replaceTitle;
+                        dialog.querySelector('[data-replace-text]').textContent = form.dataset.replaceText;
+                        dialog.showModal();
+                    }
+                });
             });
             dialog.querySelector('[data-replace-cancel]').addEventListener('click', () => dialog.close());
             dialog.querySelector('[data-replace-confirm]').addEventListener('click', () => {
                 confirmed = true;
                 dialog.close();
-                form.requestSubmit();
+                pending.requestSubmit();
             });
 
             // Background task status ---------------------------------------------

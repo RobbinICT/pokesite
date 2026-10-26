@@ -15,6 +15,8 @@ class DatabaseManager
 {
     /** Column headers importCsvFile() expects in cards.csv */
     public const CARDS_CSV_COLUMNS = ['Ndex', 'Name', 'Gen', 'Serie', 'SerieNr', 'ListNr', 'Url'];
+    /** Required column headers for minifigures.csv; an optional Url column is used when present. */
+    public const MINIFIGURES_CSV_COLUMNS = ['Identifier', 'Series', 'Name'];
 
     private EntityManagerInterface $entity_manager;
     private PokemonManager $pokemon_manager;
@@ -57,7 +59,14 @@ class DatabaseManager
         return $imported;
     }
 
-    public function importMinifiguresCsv(string $delimiter = ';'): void
+    /**
+     * Imports var/minifigures.csv. Url is optional (falls back to the BrickLink
+     * image); an empty Identifier becomes a temporary one ("temp-venom").
+     * Identifiers that already exist are skipped, so re-importing is safe.
+     *
+     * @return array{imported: int, skipped: string[]}
+     */
+    public function importMinifiguresCsv(string $delimiter = ';'): array
     {
         $base_dir = $this->kernel->getProjectDir();
         $path = $base_dir . '/var/minifigures.csv';
@@ -66,15 +75,38 @@ class DatabaseManager
         $csv->setDelimiter($delimiter);
         $csv->setHeaderOffset(0);
 
+        // Lowercased, like the admin's duplicate check.
+        $existing = [];
+        foreach ($this->entity_manager->getRepository(Minifigure::class)->getIdentifiers() as $identifier) {
+            $existing[strtolower($identifier)] = true;
+        }
+
+        $report = ['imported' => 0, 'skipped' => []];
         foreach ($csv as $row) {
-            $minifigure = new Minifigure($row['Identifier'], $row['Series'], $row['Name']);
-            if (!empty($row['Url'])) {
-                $minifigure->setUrl($row['Url']);
+            $name = trim($row['Name'] ?? '');
+            if ($name === '') {
+                continue;
             }
+            $identifier = trim($row['Identifier'] ?? '');
+            if ($identifier === '') {
+                $identifier = Minifigure::TEMPORARY_PREFIX . Minifigure::slugify($name);
+            }
+            if (isset($existing[strtolower($identifier)])) {
+                $report['skipped'][] = $identifier;
+                continue;
+            }
+            $existing[strtolower($identifier)] = true;
+
+            $minifigure = new Minifigure($identifier, trim($row['Series'] ?? ''), $name);
+            $url = trim($row['Url'] ?? '');
+            $minifigure->setUrl($url !== '' ? $url : $minifigure->getBricklinkImageUrl());
             $this->entity_manager->persist($minifigure);
+            $report['imported']++;
         }
 
         $this->entity_manager->flush();
+
+        return $report;
     }
 
     /**

@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use App\Repository\MinifigureRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\String\Slugger\AsciiSlugger;
 
 #[ORM\Entity(repositoryClass: MinifigureRepository::class)]
 #[ORM\Table(name: 'minifigure')]
@@ -51,6 +52,12 @@ class Minifigure
             return null;
         }
         return 'https://www.bricklink.com/v2/catalog/catalogitem.page?M='.$this->identifier;
+    }
+
+    /** "Lloyd - Legacy" → "lloyd-legacy", for temporary identifiers (same as the admin form's JS). */
+    public static function slugify(string $name): string
+    {
+        return (new AsciiSlugger())->slug($name)->lower()->toString();
     }
 
     /** BrickLink's catalog image for this figure (null for temporary IDs). */
