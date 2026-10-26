@@ -333,6 +333,46 @@
         @apply translate-y-2 opacity-0;
     }
 
+    /* Toggle switch: <button role="switch" aria-checked="…" class="switch"><span class="switch__thumb"> */
+    .switch {
+        @apply relative inline-flex h-6 w-11 flex-none cursor-pointer items-center rounded-full bg-gray-300
+               transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-pokeblue
+               focus-visible:ring-offset-2 disabled:cursor-wait dark:bg-gray-700 dark:focus-visible:ring-offset-gray-950;
+    }
+
+    .switch[aria-checked="true"] {
+        @apply bg-pokeblue;
+    }
+
+    .switch__thumb {
+        @apply inline-block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform;
+    }
+
+    .switch[aria-checked="true"] .switch__thumb {
+        @apply translate-x-[1.375rem];
+    }
+
+    /* Status pill for background tasks -------------------------------------- */
+    .status-pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    }
+
+    .status-pill--idle {
+        @apply bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400;
+    }
+
+    .status-pill--running {
+        @apply bg-pokeblue/10 text-pokeblue dark:bg-pokeblue/25 dark:text-blue-300;
+    }
+
+    .status-pill--success {
+        @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400;
+    }
+
+    .status-pill--failed {
+        @apply bg-red-100 text-pokered dark:bg-red-900/50 dark:text-red-400;
+    }
+
     /* Dialog ---------------------------------------------------------------- */
     .admin-dialog {
         @apply m-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-gray-200 bg-white p-0

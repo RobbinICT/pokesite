@@ -26,8 +26,13 @@ class MinifigureFormType extends AbstractType
                 'label' => 'Image URL',
                 'required' => false,
                 'default_protocol' => 'https',
-                'help' => 'The image is downloaded to the server when you save.',
-                'attr' => ['placeholder' => 'https://img.bricklink.com/…/sh0912.png', 'data-image-preview-source' => true],
+                'help' => 'Leave empty to use the BrickLink image for the identifier. The image is downloaded to the server when you save.',
+                'attr' => [
+                    'placeholder' => 'https://img.bricklink.com/…/sh0912.png',
+                    'data-image-preview-source' => true,
+                    // Preview fallback while the URL is empty; {id} is the identifier field.
+                    'data-image-preview-fallback' => 'https://img.bricklink.com/ItemImage/MN/0/{id}.png',
+                ],
                 'constraints' => [new Assert\Url(), new Assert\Length(max: 255)],
             ])
             ->add('series', DatalistType::class, [

@@ -3,6 +3,7 @@
 #}
 {% use 'form_div_layout.html.twig' with
     form_widget_simple as base_form_widget_simple,
+    choice_widget_collapsed as base_choice_widget_collapsed,
     form_label as base_form_label,
     form_label_content as base_form_label_content,
     form_help as base_form_help %}
@@ -33,6 +34,11 @@
     {%- endif -%}
     {{- block('base_form_widget_simple') -}}
 {%- endblock form_widget_simple -%}
+
+{%- block choice_widget_collapsed -%}
+    {%- set attr = attr|merge({ class: (attr.class|default('') ~ ' admin-input' ~ (errors|length > 0 ? ' admin-input--error' : ''))|trim }) -%}
+    {{- block('base_choice_widget_collapsed') -}}
+{%- endblock choice_widget_collapsed -%}
 
 {%- block datalist_widget -%}
     {{- block('form_widget_simple') -}}

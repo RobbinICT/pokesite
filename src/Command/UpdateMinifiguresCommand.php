@@ -14,7 +14,7 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 /**
  * @example php bin/console update:database:minifigures clean_import
  * @example php bin/console update:database:minifigures add
- * @example php bin/console update:database:minifigures scrape-images
+ * @example php bin/console update:database:minifigures fill-images
  */
 class UpdateMinifiguresCommand extends Command
 {
@@ -36,8 +36,8 @@ class UpdateMinifiguresCommand extends Command
     public function configure(): void
     {
         $this
-            ->setDescription("Import '/var/minifigures.csv' or scrape missing images from BrickLink")
-            ->addArgument('update_mode', InputArgument::REQUIRED, 'clean_import, add or scrape-images')
+            ->setDescription("Import '/var/minifigures.csv' or fill in missing image URLs from BrickLink")
+            ->addArgument('update_mode', InputArgument::REQUIRED, 'clean_import, add or fill-images')
             ->addArgument('delimiter', InputArgument::OPTIONAL, 'Choose the delimiter', ';');
     }
 
@@ -63,9 +63,10 @@ class UpdateMinifiguresCommand extends Command
                 $io->note('Adding minifigures.csv to existing data');
                 $this->database_manager->importMinifiguresCsv($delimiter);
                 break;
-            case 'scrape-images':
-                $io->note('Scraping missing minifigure images from BrickLink');
-                $report = $this->database_manager->scrapeMinifigureImages();
+            case 'fill-images':
+            case 'scrape-images': // old name
+                $io->note('Filling in missing minifigure image URLs from BrickLink');
+                $report = $this->database_manager->fillMinifigureImageUrls();
                 $io->success(sprintf('Updated %d image(s)', \count($report['updated'])));
                 if (!empty($report['failed']))
                 {
@@ -73,7 +74,7 @@ class UpdateMinifiguresCommand extends Command
                 }
                 return 0;
             default:
-                $io->error("Argument should be 'clean_import', 'add' or 'scrape-images'");
+                $io->error("Argument should be 'clean_import', 'add' or 'fill-images'");
                 return 1;
         }
 

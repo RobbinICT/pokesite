@@ -141,7 +141,8 @@ class MinifigureType implements CollectableType
             $item->setSeries($data['series']);
             $item->setName($data['name']);
         }
-        $item->setUrl($data['url'] ?: null);
+        // No URL given: fall back to BrickLink's catalog image for real IDs.
+        $item->setUrl($data['url'] ?: $item->getBricklinkImageUrl());
 
         return $item;
     }

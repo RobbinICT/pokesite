@@ -53,6 +53,16 @@ class Minifigure
         return 'https://www.bricklink.com/v2/catalog/catalogitem.page?M='.$this->identifier;
     }
 
+    /** BrickLink's catalog image for this figure (null for temporary IDs). */
+    public function getBricklinkImageUrl(): ?string
+    {
+        if ($this->isTemporary())
+        {
+            return null;
+        }
+        return 'https://img.bricklink.com/ItemImage/MN/0/'.$this->identifier.'.png';
+    }
+
     public function getId(): int
     {
         return $this->id;

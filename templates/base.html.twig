@@ -20,22 +20,18 @@
         }[current_route] ?? current_route %}
 
         {# Sidebar navigation: one foldable section per collection. #}
-        {% set pokemon_items = [
-            { route: 'pokemon_overview',       label: 'Overview' },
-            { route: 'pokemon_binder',         label: 'Binder' },
-            { route: 'pokemon_missing',        label: 'Missing' },
-            { route: 'pokemon_missing_unique', label: 'Missing unique' },
-        ] %}
-        {% if config.getIsSuperActionsEnabled() == 'true' %}
-            {% set pokemon_items = pokemon_items|merge([{ route: 'upload_file', label: 'Upload' }]) %}
-        {% endif %}
         {% set nav_sections = [
             {
                 key: 'pokemon',
                 label: 'Pokémon',
                 icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h6M15 12h6"/><circle cx="12" cy="12" r="3"/>',
                 search_label: 'Pokémon',
-                items: pokemon_items,
+                items: [
+                    { route: 'pokemon_overview',       label: 'Overview' },
+                    { route: 'pokemon_binder',         label: 'Binder' },
+                    { route: 'pokemon_missing',        label: 'Missing' },
+                    { route: 'pokemon_missing_unique', label: 'Missing unique' },
+                ],
             },
             {
                 key: 'lego',

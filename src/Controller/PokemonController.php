@@ -4,7 +4,6 @@ namespace App\Controller;
 
 use App\Entity\Config;
 use App\Entity\Pokemon;
-use App\Service\ConfigManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;

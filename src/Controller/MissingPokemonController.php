@@ -71,11 +71,10 @@ class MissingPokemonController extends AbstractController
         $search_string = $request->get('q');
         /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
-        $exclude_paradox_rift = $config->getIsParadoxRiftExclude();
 
         $repository = $this->entity_manager->getRepository(MissingPokemon::class);
-        $pokemon = $repository->findAllMissingPokemon($search_string, $exclude_paradox_rift, 0, self::BATCH_SIZE);
-        $total = $repository->countMissingPokemon($search_string, $exclude_paradox_rift);
+        $pokemon = $repository->findAllMissingPokemon($search_string, 0, self::BATCH_SIZE);
+        $total = $repository->countMissingPokemon($search_string);
 
         return $this->render('missing_pokemon/index.html.twig', [
             'config' => $config,
@@ -96,10 +95,9 @@ class MissingPokemonController extends AbstractController
 
         /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
-        $exclude_paradox_rift = $config->getIsParadoxRiftExclude();
 
         $pokemon = $this->entity_manager->getRepository(MissingPokemon::class)
-            ->findAllMissingPokemon($search_string, $exclude_paradox_rift, $offset, self::BATCH_SIZE);
+            ->findAllMissingPokemon($search_string, $offset, self::BATCH_SIZE);
 
         $html = $this->renderView('missing_pokemon/_batch.html.twig', [
             'config' => $config,
@@ -141,14 +139,7 @@ class MissingPokemonController extends AbstractController
             $pokemon[] = new MissingUniquePokemon($miss['id'], $miss['title']);
         }
 
-        /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
-        if ($config->getIsInAlphabeticalOrder())
-        {
-            usort($pokemon, function($a, $b) {
-                return strcmp($a->getTitle(), $b->getTitle());
-            });
-        }
 
         $total = self::countMissingUnique();
         return $this->render('missing_pokemon/unique_index.html.twig',[

@@ -119,19 +119,31 @@
             };
             img.addEventListener('load', () => show('image'));
             img.addEventListener('error', () => show(img.getAttribute('src') ? 'error' : 'empty'));
+            // Optional fallback built from the identifier (e.g. BrickLink image), used while the URL is empty.
+            const fallback = source.dataset.imagePreviewFallback;
+            const identifier = form.querySelector('[data-temp-id-target]');
+            const fallbackUrl = () => {
+                const id = identifier ? identifier.value.trim() : '';
+                return fallback && id && !id.startsWith('{{ constant('App\\Entity\\Minifigure::TEMPORARY_PREFIX') }}')
+                    ? fallback.replace('{id}', encodeURIComponent(id)) : null;
+            };
             let timer;
-            source.addEventListener('input', () => {
+            const update = () => {
                 clearTimeout(timer);
                 timer = setTimeout(() => {
-                    const url = source.value.trim();
-                    if (url === '') {
+                    const url = source.value.trim() || fallbackUrl();
+                    if (!url) {
                         // Fall back to the stored image when the URL is cleared.
                         if (initial) { img.src = initial; } else { img.removeAttribute('src'); show('empty'); }
                         return;
                     }
                     img.src = url;
                 }, 300);
-            });
+            };
+            source.addEventListener('input', update);
+            if (identifier && fallback) {
+                identifier.addEventListener('input', update);
+            }
 
             // Live title ----------------------------------------------------
             const name = form.querySelector('[name$="[name]"]');

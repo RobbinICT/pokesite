@@ -13,6 +13,9 @@ use Symfony\Component\HttpKernel\KernelInterface;
 
 class DatabaseManager
 {
+    /** Column headers importCsvFile() expects in cards.csv */
+    public const CARDS_CSV_COLUMNS = ['Ndex', 'Name', 'Gen', 'Serie', 'SerieNr', 'ListNr', 'Url'];
+
     private EntityManagerInterface $entity_manager;
     private PokemonManager $pokemon_manager;
     private KernelInterface $kernel;
@@ -24,7 +27,10 @@ class DatabaseManager
         $this->kernel = $kernel;
     }
 
-    public function importCsvFile(string $delimiter = ';'): void
+    /**
+     * @return int number of imported cards
+     */
+    public function importCsvFile(string $delimiter = ';'): int
     {
         // Get the base directory of your Symfony project
         $base_dir = $this->kernel->getProjectDir();
@@ -37,14 +43,18 @@ class DatabaseManager
         $csv->setHeaderOffset(0);
 
         // Iterate through each row
+        $imported = 0;
         foreach ($csv as $row) {
             $serie_nr = $this->extractNumericPart($row['SerieNr']);
             $pokemon = new Pokemon((int)$row['Ndex'], $row['Name'], (int)$row['Gen'], $row['Serie'], $serie_nr, $row['ListNr']);
             $pokemon->setUrl($row['Url']);
             $this->entity_manager->persist($pokemon);
+            $imported++;
         }
 
         $this->entity_manager->flush();
+
+        return $imported;
     }
 
     public function importMinifiguresCsv(string $delimiter = ';'): void
@@ -68,10 +78,12 @@ class DatabaseManager
     }
 
     /**
-     * Fills in missing image URLs for minifigures by scraping the BrickLink
-     * catalog page's og:image meta tag. Returns a report keyed by outcome.
+     * Fills in missing image URLs for minifigures with BrickLink's catalog
+     * image (img.bricklink.com/ItemImage/MN/0/<identifier>.png). Each URL is
+     * checked first so unknown identifiers don't get a broken link.
+     * Returns a report keyed by outcome.
      */
-    public function scrapeMinifigureImages(): array
+    public function fillMinifigureImageUrls(): array
     {
         $report = ['updated' => [], 'failed' => []];
         $minifigures = $this->entity_manager->getRepository(Minifigure::class)->getMinifiguresWithoutUrl();
@@ -83,20 +95,18 @@ class DatabaseManager
         ]);
 
         foreach ($minifigures as $minifigure) {
-            if ($minifigure->isTemporary()) {
+            $url = $minifigure->getBricklinkImageUrl();
+            if ($url === null) {
                 continue;
             }
             try {
-                $response = $client->request('GET', $minifigure->getBricklinkUrl());
-                $content = $response->getContent();
-                $crawler = new Crawler($content);
-                $image_node = $crawler->filterXPath('//meta[@property="og:image"]');
-                if ($image_node->count() === 0) {
+                $response = $client->request('HEAD', $url);
+                $content_type = $response->getHeaders(false)['content-type'][0] ?? '';
+                if ($response->getStatusCode() !== 200 || !str_starts_with($content_type, 'image/')) {
                     $report['failed'][] = $minifigure->getIdentifier();
                     continue;
                 }
-                $minifigure->setUrl($image_node->attr('content'));
-                $this->entity_manager->persist($minifigure);
+                $minifigure->setUrl($url);
                 $report['updated'][] = $minifigure->getIdentifier();
             } catch (\Throwable $e) {
                 $report['failed'][] = $minifigure->getIdentifier();

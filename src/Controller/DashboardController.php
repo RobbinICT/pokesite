@@ -32,8 +32,7 @@ class DashboardController extends AbstractController
             'pokemon_stats' => [
                 'owned' => $pokemon_repository->countPokemon(),
                 'binder' => $pokemon_repository->countPokemon(true),
-                'missing' => $this->entity_manager->getRepository(MissingPokemon::class)
-                    ->countMissingPokemon(null, $config->getIsParadoxRiftExclude()),
+                'missing' => $this->entity_manager->getRepository(MissingPokemon::class)->countMissingPokemon(),
                 'missing_unique' => MissingPokemonController::countMissingUnique(),
             ],
             'lego_stats' => [

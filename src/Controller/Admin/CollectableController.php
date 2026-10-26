@@ -235,18 +235,9 @@ class CollectableController extends AbstractController
 
     private function renderAdmin(string $template, CollectableType $current, array $parameters, ?Response $response = null): Response
     {
-        $nav = [];
-        foreach ($this->registry->all() as $collectable)
-        {
-            $nav[] = [
-                'type' => $collectable,
-                'count' => $this->entity_manager->getRepository($collectable->getEntityClass())->count([]),
-            ];
-        }
-
         return $this->render($template, $parameters + [
             'collectable' => $current,
-            'nav' => $nav,
+            'active_key' => $current->getKey(),
         ], $response);
     }
 }
