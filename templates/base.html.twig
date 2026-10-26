@@ -13,66 +13,162 @@
 
     <body>
         {% set current_route = app.request.attributes.get('_route') %}
-        {% set nav = [
-            { route: 'show_final_pokemon',          label: 'Final' },
-            { route: 'show_all_pokemon',            label: 'Complete' },
-            { route: 'show_missing_pokemon',        label: 'Missing' },
-            { route: 'show_unique_missing_pokemon', label: 'Missing unique' },
-            { route: 'show_lego_minifigures',       label: 'LEGO' }
+        {# Detail pages highlight the list they belong to. #}
+        {% set nav_route = {
+            pokemon_card: 'pokemon_overview',
+            pokemon_missing_card: 'pokemon_missing',
+        }[current_route] ?? current_route %}
+
+        {# Sidebar navigation: one foldable section per collection. #}
+        {% set pokemon_items = [
+            { route: 'pokemon_overview',       label: 'Overview' },
+            { route: 'pokemon_binder',         label: 'Binder' },
+            { route: 'pokemon_missing',        label: 'Missing' },
+            { route: 'pokemon_missing_unique', label: 'Missing unique' },
         ] %}
-        {% set list_routes = ['show_final_pokemon', 'show_all_pokemon', 'show_missing_pokemon', 'show_lego_minifigures'] %}
-        {% set search_action = current_route in list_routes ? app.request.pathinfo : path('show_all_pokemon') %}
+        {% if config.getIsSuperActionsEnabled() == 'true' %}
+            {% set pokemon_items = pokemon_items|merge([{ route: 'upload_file', label: 'Upload' }]) %}
+        {% endif %}
+        {% set nav_sections = [
+            {
+                key: 'pokemon',
+                label: 'Pokémon',
+                icon: '<circle cx="12" cy="12" r="9"/><path d="M3 12h6M15 12h6"/><circle cx="12" cy="12" r="3"/>',
+                search_label: 'Pokémon',
+                items: pokemon_items,
+            },
+            {
+                key: 'lego',
+                label: 'LEGO',
+                icon: '<rect x="8" y="2.5" width="8" height="7" rx="2"/><path d="M10.5 2.5v-1h3v1"/><path d="M6 21v-7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v7"/><path d="M12 14v7"/>',
+                search_label: 'minifigures',
+                items: [
+                    { route: 'lego_overview', label: 'Overview' },
+                ],
+            },
+        ] %}
+
+        {% set current_section = null %}
+        {% for section in nav_sections %}
+            {% if nav_route in section.items|column('route') %}{% set current_section = section %}{% endif %}
+        {% endfor %}
+
+        {# Search filters the current list; elsewhere it searches all Pokémon. #}
+        {% set list_routes = ['pokemon_overview', 'pokemon_binder', 'pokemon_missing', 'lego_overview'] %}
+        {% set search_action = current_route in list_routes ? app.request.pathinfo : path('pokemon_overview') %}
+        {% set search_label = current_route in list_routes ? current_section.search_label : 'Pokémon' %}
 
         <header class="app-header">
-            <div class="mx-auto flex w-full max-w-screen-2xl flex-col gap-3 px-3 py-3 sm:px-6">
-                <div class="flex items-center gap-3">
-                    <a href="{{ path('show_final_pokemon') }}" class="brand text-lg sm:text-xl">
-                        <span class="brand__mark">
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/>
-                                <path d="M3 12h6a3 3 0 1 0 6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-                                <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+            <div class="mx-auto flex h-14 w-full max-w-screen-2xl items-center gap-2 px-3 sm:gap-3 sm:px-5">
+                <button type="button" class="icon-btn -ml-1 lg:hidden" data-drawer-open aria-label="Open menu" aria-controls="sidebar">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+                </button>
+
+                <a href="{{ path('home') }}" class="brand text-lg sm:text-xl">
+                    <span class="brand__mark">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/>
+                            <path d="M3 12h6a3 3 0 1 0 6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                        </svg>
+                    </span>
+                    <span class="hidden sm:inline">Robbin's Pokésite</span>
+                </a>
+
+                <div class="relative ml-auto w-full max-w-sm">
+                    <form method="get" action="{{ search_action }}" role="search">
+                        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
+                            <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                                <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.16 10.03l3.4 3.41a1 1 0 0 0 1.42-1.42l-3.41-3.4A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd"/>
                             </svg>
                         </span>
-                        <span class="hidden sm:inline">Robbin's Pokésite</span>
-                        <span class="sm:hidden">Pokésite</span>
-                    </a>
-
-                    <div class="relative ml-auto w-full max-w-[14rem] sm:max-w-sm">
-                        <form method="get" action="{{ search_action }}" role="search">
-                            <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-gray-400">
-                                <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
-                                    <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 1 0 3.16 10.03l3.4 3.41a1 1 0 0 0 1.42-1.42l-3.41-3.4A5.5 5.5 0 0 0 9 3.5ZM5.5 9a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0Z" clip-rule="evenodd"/>
-                                </svg>
-                            </span>
-                            <input name="q" value="{{ search_string|default('') }}" type="search"
-                                   class="search-field" placeholder="Search Pokémon…" aria-label="Search Pokémon">
-                        </form>
-                    </div>
+                        <input name="q" value="{{ search_string|default('') }}" type="search"
+                               class="search-field" placeholder="Search {{ search_label }}…" aria-label="Search {{ search_label }}">
+                    </form>
                 </div>
 
-                <nav class="nav-tabs" aria-label="Collection lists">
-                    {% for item in nav %}
-                        <a href="{{ path(item.route) }}"
-                           class="nav-tab {{ current_route == item.route ? 'nav-tab--active' }}"
-                           {{ current_route == item.route ? 'aria-current="page"' }}>
-                            {{ item.label }}
-                        </a>
-                    {% endfor %}
-                    {% if config.getIsSuperActionsEnabled() == 'true' %}
-                        <a href="{{ path('upload_file') }}" class="nav-tab">Upload</a>
-                    {% endif %}
-                    {% if is_granted('ROLE_ADMIN') %}
-                        <a href="{{ path('admin_index') }}" class="nav-tab ml-auto">Admin</a>
-                    {% endif %}
-                </nav>
+                {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin_index') }}" class="icon-btn" title="Admin" aria-label="Admin">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+                    </a>
+                {% endif %}
             </div>
         </header>
 
-        <main class="app-shell pt-5">
-            {% block body %}{% endblock %}
-        </main>
+        <div class="mx-auto flex w-full max-w-screen-2xl">
+            <div class="sidebar-backdrop" data-drawer-close hidden></div>
+            <aside id="sidebar" class="sidebar" aria-label="Collections">
+                <div class="mb-2 flex items-center justify-between lg:hidden">
+                    <span class="px-3 text-sm font-bold">Menu</span>
+                    <button type="button" class="icon-btn" data-drawer-close aria-label="Close menu">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                    </button>
+                </div>
 
+                <nav class="flex flex-col gap-1">
+                    <a href="{{ path('home') }}"
+                       class="side-nav-item {{ current_route == 'home' ? 'side-nav-item--active' }}"
+                       {{ current_route == 'home' ? 'aria-current="page"' }}>
+                        <svg class="h-5 w-5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5"/></svg>
+                        Dashboard
+                    </a>
+
+                    <p class="side-nav-heading mt-2">Collections</p>
+                    {% for section in nav_sections %}
+                        {% set is_current = current_section is not null and current_section.key == section.key %}
+                        <details class="side-nav-section" data-nav-section="{{ section.key }}" {{ is_current ? 'data-nav-current' }} open>
+                            <summary class="side-nav-item side-nav-summary">
+                                <svg class="h-5 w-5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ section.icon|raw }}</svg>
+                                {{ section.label }}
+                                <svg class="side-nav-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                            </summary>
+                            <div class="side-nav-sub">
+                                {% for item in section.items %}
+                                    {% set is_active = nav_route == item.route %}
+                                    <a href="{{ path(item.route) }}"
+                                       class="side-nav-item {{ is_active ? 'side-nav-item--active' }}"
+                                       {{ is_active ? 'aria-current="page"' }}>
+                                        {{ item.label }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </details>
+                    {% endfor %}
+                </nav>
+            </aside>
+
+            <main class="app-shell min-w-0 flex-1 pt-5">
+                {% block body %}{% endblock %}
+            </main>
+        </div>
+
+        <script>
+            (function () {
+                // Sidebar drawer (small screens)
+                const sidebar = document.getElementById('sidebar');
+                const backdrop = document.querySelector('.sidebar-backdrop');
+                const setDrawer = (open) => {
+                    sidebar.classList.toggle('sidebar--open', open);
+                    backdrop.hidden = !open;
+                };
+                document.querySelectorAll('[data-drawer-open]').forEach((el) => el.addEventListener('click', () => setDrawer(true)));
+                document.querySelectorAll('[data-drawer-close]').forEach((el) => el.addEventListener('click', () => setDrawer(false)));
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
+
+                // Foldable sections remember being folded; the current section always starts open.
+                const storageKey = (section) => 'nav-folded:' + section.dataset.navSection;
+                document.querySelectorAll('[data-nav-section]').forEach((section) => {
+                    try {
+                        if (!section.hasAttribute('data-nav-current') && localStorage.getItem(storageKey(section)) === '1') {
+                            section.open = false;
+                        }
+                    } catch (e) { /* storage blocked: keep default */ }
+                    section.addEventListener('toggle', () => {
+                        try { localStorage.setItem(storageKey(section), section.open ? '0' : '1'); } catch (e) {}
+                    });
+                });
+            })();
+        </script>
         {% block javascripts %}{% endblock %}
     </body>
 </html>

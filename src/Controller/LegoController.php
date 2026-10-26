@@ -21,8 +21,14 @@ class LegoController extends AbstractController
         $this->entity_manager = $entity_manager;
     }
 
-    #[Route(path: '/lego', name: 'show_lego_minifigures')]
-    public function index(Request $request): Response
+    #[Route(path: '/lego', name: 'lego_index')]
+    public function index(): Response
+    {
+        return $this->redirectToRoute('lego_overview');
+    }
+
+    #[Route(path: '/lego/overview', name: 'lego_overview')]
+    public function overview(Request $request): Response
     {
         $search_string = $request->get('q');
         $minifigures = $this->entity_manager->getRepository(Minifigure::class)

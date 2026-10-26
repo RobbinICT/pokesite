@@ -33,7 +33,7 @@ class UploadFileController extends AbstractController
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         if ($config->getIsSuperActionsEnabled() !== true)
         {
-            return $this->redirectToRoute('show_final_pokemon');
+            return $this->redirectToRoute('home');
         }
 
         $form = $this->createForm(UploadFileType::class);
@@ -62,7 +62,7 @@ class UploadFileController extends AbstractController
                 {
                     return new JsonResponse('no file found');
                 }
-                return $this->redirectToRoute('show_final_pokemon');
+                return $this->redirectToRoute('home');
             }
         }
 

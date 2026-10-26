@@ -143,46 +143,77 @@
                dark:border-gray-800/70 dark:bg-gray-950/85;
     }
 
+    /* ======================================================================
+       Sidebar navigation (public site + admin)
+       ====================================================================== */
     /* Off-canvas drawer on small screens, sticky column from lg up. */
-    .admin-sidebar {
+    .sidebar {
         @apply fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col gap-1 border-r
                border-gray-200 bg-white px-3 py-4 transition-transform duration-200
                lg:sticky lg:top-14 lg:z-auto lg:h-[calc(100vh-3.5rem)] lg:translate-x-0
                lg:bg-transparent dark:border-gray-800 dark:bg-gray-900 lg:dark:bg-transparent;
     }
 
-    .admin-sidebar--open {
+    .sidebar--open {
         @apply translate-x-0 shadow-2xl;
     }
 
-    .admin-backdrop {
+    .sidebar-backdrop {
         @apply fixed inset-0 z-40 bg-gray-950/40 backdrop-blur-sm lg:hidden;
     }
 
-    .admin-nav-heading {
+    .side-nav-heading {
         @apply px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500;
     }
 
-    .admin-nav-item {
+    .side-nav-item {
         @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-gray-600
                transition-colors hover:bg-gray-100 hover:text-gray-900
                dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
     }
 
-    .admin-nav-item--active {
+    .side-nav-item--active {
         @apply bg-pokeblue text-white shadow-sm hover:bg-pokeblue hover:text-white
                dark:text-white dark:hover:bg-pokeblue;
     }
 
-    .admin-nav-count {
+    .side-nav-count {
         @apply ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold tabular-nums
                text-gray-500 dark:bg-gray-800 dark:text-gray-400;
     }
 
-    .admin-nav-item--active .admin-nav-count {
+    .side-nav-item--active .side-nav-count {
         @apply bg-white/20 text-white;
     }
 
+    /* Foldable section: <details class="side-nav-section"><summary class="side-nav-item side-nav-summary"> */
+    .side-nav-summary {
+        @apply cursor-pointer list-none select-none text-gray-900 dark:text-white;
+    }
+
+    .side-nav-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .side-nav-chevron {
+        @apply ml-auto h-4 w-4 flex-none text-gray-400 transition-transform duration-200;
+    }
+
+    .side-nav-section[open] > .side-nav-summary .side-nav-chevron {
+        @apply rotate-90;
+    }
+
+    .side-nav-sub {
+        @apply mb-1 ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-gray-200 pl-2 dark:border-gray-800;
+    }
+
+    .side-nav-sub .side-nav-item {
+        @apply py-1.5;
+    }
+
+    /* ======================================================================
+       Admin
+       ====================================================================== */
     .admin-panel {
         @apply rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900;
     }

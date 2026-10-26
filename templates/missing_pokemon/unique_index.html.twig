@@ -33,7 +33,7 @@
         {% if pokemon|length > 0 %}
             <section>
                 {{ ui.section('Missing Unique Pokémon', pokemon|length) }}
-                <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+                <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
                     {% for p in pokemon %}
                         {% include '_components/card.html.twig' with {
                             href: p.getTcgDexUrl(),
@@ -57,7 +57,7 @@
             {% if group.list|length > 0 %}
                 <section>
                     {{ ui.section(group.label, group.list|length) }}
-                    <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+                    <div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
                         {% for p in group.list %}
                             {% include '_components/card.html.twig' with {
                                 href: p[1],

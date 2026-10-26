@@ -22,7 +22,7 @@ security:
                 enable_csrf: true
             logout:
                 path: admin_logout
-                target: show_final_pokemon
+                target: home
             remember_me:
                 secret: '%kernel.secret%'
                 lifetime: 2592000 # 30 days
