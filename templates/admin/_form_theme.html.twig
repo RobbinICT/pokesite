@@ -40,13 +40,29 @@
     {{- block('base_choice_widget_collapsed') -}}
 {%- endblock choice_widget_collapsed -%}
 
+{#- Text input + suggestion list (free text still allowed); behaviour in form.html.twig -#}
 {%- block datalist_widget -%}
-    {{- block('form_widget_simple') -}}
-    <datalist id="{{ id }}_suggestions">
-        {%- for suggestion in suggestions -%}
-            <option value="{{ suggestion }}"></option>
-        {%- endfor -%}
-    </datalist>
+    <div class="combobox" data-combobox>
+        {%- set attr = attr|merge({
+            class: (attr.class|default('') ~ ' pr-10')|trim,
+            role: 'combobox',
+            autocomplete: 'off',
+            'aria-autocomplete': 'list',
+            'aria-expanded': 'false',
+            'aria-controls': id ~ '_listbox',
+        }) -%}
+        {{- block('form_widget_simple') -}}
+        {%- if suggestions is not empty -%}
+            <button type="button" class="combobox__toggle" tabindex="-1" aria-label="Show all suggestions" data-combobox-toggle>
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+            </button>
+        {%- endif -%}
+        <ul id="{{ id }}_listbox" class="combobox__list" role="listbox" aria-label="{{ label|default(name) }}" hidden data-combobox-list>
+            {%- for suggestion in suggestions -%}
+                <li id="{{ id }}_option_{{ loop.index }}" role="option" class="combobox__option" aria-selected="false" data-value="{{ suggestion }}">{{ suggestion }}</li>
+            {%- endfor -%}
+        </ul>
+    </div>
 {%- endblock datalist_widget -%}
 
 {%- block form_label -%}

@@ -271,6 +271,37 @@
         @apply border-pokeblue bg-pokeblue/5 text-pokeblue dark:border-blue-400 dark:bg-pokeblue/15 dark:text-blue-300;
     }
 
+    /* Combobox: text input with a filterable suggestion list (DatalistType) */
+    .combobox {
+        @apply relative;
+    }
+
+    .combobox__toggle {
+        @apply absolute inset-y-0 right-0 grid w-10 place-items-center text-gray-400 hover:text-gray-700
+               dark:hover:text-white;
+    }
+
+    .combobox__toggle[aria-expanded="true"] svg {
+        @apply rotate-180;
+    }
+
+    .combobox__list {
+        @apply absolute inset-x-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200
+               bg-white py-1 text-sm shadow-lg dark:border-gray-700 dark:bg-gray-900;
+    }
+
+    .combobox__option {
+        @apply cursor-pointer truncate px-3 py-1.5 text-gray-800 dark:text-gray-200;
+    }
+
+    .combobox__option[aria-selected="true"] {
+        @apply bg-pokeblue text-white;
+    }
+
+    .combobox__option mark {
+        @apply bg-transparent font-bold text-inherit;
+    }
+
     .admin-checkbox {
         @apply h-4 w-4 cursor-pointer rounded border-gray-300 text-pokeblue accent-pokeblue focus:ring-2 focus:ring-pokeblue/40
                dark:border-gray-600 dark:bg-gray-950;

@@ -176,6 +176,100 @@
                 });
             }
 
+            // Suggestion comboboxes (series) -------------------------------
+            // Opens on focus/click, filters while typing, arrows + Enter to
+            // pick, Escape to close. Any other value can still be typed.
+            form.querySelectorAll('[data-combobox]').forEach((box) => {
+                const input = box.querySelector('input');
+                const list = box.querySelector('[data-combobox-list]');
+                const toggle = box.querySelector('[data-combobox-toggle]');
+                const options = [...list.children];
+                let visible = [];
+                let active = -1;
+
+                const setActive = (index) => {
+                    options.forEach((o) => o.setAttribute('aria-selected', 'false'));
+                    active = index;
+                    if (index >= 0 && visible[index]) {
+                        visible[index].setAttribute('aria-selected', 'true');
+                        visible[index].scrollIntoView({ block: 'nearest' });
+                        input.setAttribute('aria-activedescendant', visible[index].id);
+                    } else {
+                        input.removeAttribute('aria-activedescendant');
+                    }
+                };
+                const close = () => {
+                    list.hidden = true;
+                    input.setAttribute('aria-expanded', 'false');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+                    setActive(-1);
+                };
+                // showAll: list everything (toggle / focus), otherwise filter on the typed text.
+                const open = (showAll) => {
+                    const query = input.value.trim().toLowerCase();
+                    const exact = options.some((o) => o.dataset.value.toLowerCase() === query);
+                    visible = [];
+                    options.forEach((o) => {
+                        const value = o.dataset.value;
+                        const at = value.toLowerCase().indexOf(query);
+                        const show = showAll || exact || query === '' || at !== -1;
+                        o.hidden = !show;
+                        // Bold the matched part.
+                        if (show && query && at !== -1 && !exact) {
+                            const mark = document.createElement('mark');
+                            mark.textContent = value.slice(at, at + query.length);
+                            o.replaceChildren(value.slice(0, at), mark, value.slice(at + query.length));
+                        } else {
+                            o.textContent = value;
+                        }
+                        if (show) visible.push(o);
+                    });
+                    if (!visible.length) { close(); return; }
+                    list.hidden = false;
+                    input.setAttribute('aria-expanded', 'true');
+                    if (toggle) toggle.setAttribute('aria-expanded', 'true');
+                    // Highlight the current value, if it is in the list.
+                    setActive(visible.findIndex((o) => o.dataset.value.toLowerCase() === query));
+                };
+                const pick = (option) => {
+                    input.value = option.dataset.value;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    close();
+                };
+
+                if (!options.length) return;
+                input.addEventListener('focus', () => open(true));
+                input.addEventListener('click', () => { if (list.hidden) open(true); });
+                input.addEventListener('input', (e) => { if (e.isTrusted) open(false); });
+                input.addEventListener('blur', close);
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                        e.preventDefault();
+                        if (list.hidden) { open(true); return; }
+                        const step = e.key === 'ArrowDown' ? 1 : -1;
+                        setActive((active + step + visible.length) % visible.length);
+                    } else if (e.key === 'Enter' && !list.hidden && active >= 0 && !(e.metaKey || e.ctrlKey)) {
+                        e.preventDefault();
+                        pick(visible[active]);
+                    } else if (e.key === 'Escape' && !list.hidden) {
+                        e.preventDefault();
+                        close();
+                    }
+                });
+                // mousedown + preventDefault keeps focus in the input.
+                list.addEventListener('mousedown', (e) => {
+                    e.preventDefault();
+                    const option = e.target.closest('[role="option"]');
+                    if (option) pick(option);
+                });
+                if (toggle) {
+                    toggle.addEventListener('mousedown', (e) => {
+                        e.preventDefault();
+                        if (list.hidden) { input.focus(); open(true); } else { close(); }
+                    });
+                }
+            });
+
             // Cmd/Ctrl + Enter saves ----------------------------------------
             form.addEventListener('keydown', (e) => {
                 if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
