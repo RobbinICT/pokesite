@@ -44,6 +44,11 @@ class AdminTaskRunner
                 'description' => 'Sets BrickLink\'s catalog image for minifigures without an image URL. Temporary IDs are skipped.',
                 'command' => ['update:database:minifigures', 'fill-images'],
             ],
+            'minifigure_downloads' => [
+                'label' => 'Download minifigure images',
+                'description' => 'Downloads the images of minifigures that are not on the server yet. Runs automatically after a minifigures import.',
+                'command' => ['update:database:minifigures', 'download-images'],
+            ],
         ];
     }
 

@@ -87,6 +87,23 @@ class CollectableImageStorage
         return null;
     }
 
+    /**
+     * Downloads the image when there is a URL but no local file yet (bulk imports).
+     *
+     * @return bool|string true when downloaded, false when there was nothing to do, or an error
+     */
+    public function downloadMissing(CollectableType $type, object $item): bool|string
+    {
+        $path = $type->getLocalImagePath($item);
+        $url = $type->getImageUrl($item);
+        if (!$url || is_file($this->public_dir.$path))
+        {
+            return false;
+        }
+
+        return $this->download($url, $path) ?? true;
+    }
+
     public function remove(CollectableType $type, object $item): void
     {
         $absolute = $this->public_dir.$type->getLocalImagePath($item);
