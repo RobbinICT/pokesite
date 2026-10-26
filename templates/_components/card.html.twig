@@ -1,0 +1,27 @@
+{#
+    Shared card used by every grid (initial render + infinite-scroll batches).
+    Params:
+      href      (string)  link target
+      img_src   (string)  lazy image source
+      alt       (string)  image alt text
+      title     (string)  card title
+      subtitle  (string, optional)  secondary line (e.g. "Base Set #4")
+      serie     (string, optional)  serie name, exposed as data-serie for grouping
+      target    (string, optional)  link target attribute (e.g. "_blank")
+#}
+<a href="{{ href }}"
+   class="pk-card"
+   {% if serie is defined and serie is not null %}data-serie="{{ serie }}"{% endif %}
+   {% if target is defined and target %}target="{{ target }}" rel="noopener"{% endif %}>
+    <img class="pk-card__img lazy"
+         data-src="{{ img_src }}"
+         alt="{{ alt }}"
+         loading="lazy"
+         onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+    <div class="pk-card__caption">
+        <span class="pk-card__title">{{ title }}</span>
+        {% if subtitle is defined and subtitle %}
+            <span class="pk-card__subtitle">{{ subtitle }}</span>
+        {% endif %}
+    </div>
+</a>

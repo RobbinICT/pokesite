@@ -1,15 +1,24 @@
-version: '3.8'
+# Local development stack.
+#
+# The source tree is bind-mounted into the PHP container, so code changes are
+# picked up without rebuilding the image. Dependencies and assets are installed
+# at container start by docker-entrypoint.sh (only when missing).
+#
+# For a slim, self-contained production image see docker-compose.prod.yml.
 
 services:
   web:
-    image: nginx:latest
+    image: nginx:alpine
     container_name: symfony_web
     restart: unless-stopped
     ports:
       - "1998:80"
     volumes:
-      - ./public:/var/www/html/public
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./public:/var/www/html/public:ro
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      # Card images live outside the repo (e.g. an external drive). Set
+      # POKEMON_IMAGES_DIR to that path; defaults to the in-repo folder.
+      - "${POKEMON_IMAGES_DIR:-./public/images}:/var/www/html/public/images:ro"
     depends_on:
       - php
     networks:
@@ -19,11 +28,14 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
     container_name: symfony_php
     restart: unless-stopped
     volumes:
       - ./:/var/www/html
-      - ./php.ini:/usr/local/etc/php/conf.d/php.ini
+      # Same external card-image dir, mounted read-write here so the
+      # images:add / images:rename console commands can write to it.
+      - "${POKEMON_IMAGES_DIR:-./public/images}:/var/www/html/public/images:rw"
     networks:
       - symfony
 

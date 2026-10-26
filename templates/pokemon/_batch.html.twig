@@ -1,0 +1,17 @@
+{#
+    Renders one batch of Pokemon cards. Used for both the initial page render
+    and incremental infinite-scroll fetches.
+    Params: config, pokemon (iterable of Pokemon)
+#}
+{% for p in pokemon %}
+    {% set img_src = config.getUseLocalCards() == 'true'
+        ? asset('images/pokemon/' ~ p.getUniqueIdentifierV2()|url_encode ~ '.png')
+        : p.url %}
+    {% include '_components/card.html.twig' with {
+        href: path('show_single_pokemon', { 'id': p.id }),
+        img_src: img_src,
+        alt: p.name,
+        title: p.name,
+        subtitle: p.serie ~ ' #' ~ p.serie_nr,
+    } only %}
+{% endfor %}

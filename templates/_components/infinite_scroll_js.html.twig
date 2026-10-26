@@ -1,0 +1,118 @@
+<script>
+    (function () {
+        var grid = document.getElementById("card-grid");
+        var sentinel = document.getElementById("scroll-sentinel");
+        if (!grid) return;
+
+        /* ---- Shared lazy-image observer (works on appended nodes too) ---- */
+        var lazyObserver = null;
+        if ("IntersectionObserver" in window) {
+            lazyObserver = new IntersectionObserver(function (entries, observer) {
+                entries.forEach(function (entry) {
+                    if (!entry.isIntersecting) return;
+                    var img = entry.target;
+                    img.src = img.dataset.src;
+                    img.classList.remove("lazy");
+                    observer.unobserve(img);
+                });
+            }, { rootMargin: "200px" });
+        }
+
+        function observeLazyImages(root) {
+            var images = (root || document).querySelectorAll("img.lazy");
+            if (lazyObserver) {
+                images.forEach(function (img) { lazyObserver.observe(img); });
+            } else {
+                images.forEach(function (img) {
+                    img.src = img.dataset.src;
+                    img.classList.remove("lazy");
+                });
+            }
+        }
+
+        // Observe the initial batch already in the DOM.
+        observeLazyImages(grid);
+
+        /* ---- Infinite scroll ---- */
+        if (!sentinel) return;
+
+        var type = grid.dataset.type || "pokemon";
+        var endpoint = grid.dataset.endpoint;
+        var q = grid.dataset.q || "";
+        var isFinal = grid.dataset.final === "1";
+        var batchSize = parseInt(grid.dataset.batchSize, 10) || 60;
+        var offset = parseInt(grid.dataset.offset, 10) || batchSize;
+        var lastSerie = grid.dataset.lastSerie || "";
+        var hasMore = grid.dataset.hasMore === "1";
+        var isLoading = false;
+
+        var loader = document.getElementById("scroll-loader");
+
+        function toggleLoader(show) {
+            if (loader) loader.style.display = show ? "flex" : "none";
+        }
+
+        function buildUrl() {
+            var params = new URLSearchParams();
+            if (q) params.set("q", q);
+            params.set("offset", String(offset));
+            if (type === "pokemon") {
+                params.set("final", isFinal ? "1" : "0");
+            } else {
+                params.set("last_serie", lastSerie);
+            }
+            return endpoint + "?" + params.toString();
+        }
+
+        function stop() {
+            hasMore = false;
+            toggleLoader(false);
+            if (sentinelObserver) sentinelObserver.unobserve(sentinel);
+        }
+
+        function loadMore() {
+            if (isLoading || !hasMore) return;
+            isLoading = true;
+            toggleLoader(true);
+
+            fetch(buildUrl(), { headers: { "X-Requested-With": "fetch" } })
+                .then(function (res) {
+                    if (!res.ok) throw new Error("Batch request failed: " + res.status);
+                    hasMore = res.headers.get("X-Has-More") === "1";
+                    var nextSerie = res.headers.get("X-Last-Serie");
+                    if (nextSerie !== null) lastSerie = nextSerie;
+                    return res.text();
+                })
+                .then(function (html) {
+                    var first = grid.lastElementChild;
+                    grid.insertAdjacentHTML("beforeend", html);
+                    // Observe lazy images among the freshly appended nodes.
+                    observeLazyImages(grid);
+                    offset += batchSize;
+                    isLoading = false;
+                    if (!hasMore) {
+                        stop();
+                    } else {
+                        toggleLoader(false);
+                    }
+                })
+                .catch(function () {
+                    // Allow a later scroll to retry.
+                    isLoading = false;
+                    toggleLoader(false);
+                });
+        }
+
+        var sentinelObserver = null;
+        if ("IntersectionObserver" in window && hasMore) {
+            sentinelObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) loadMore();
+                });
+            }, { rootMargin: "600px" });
+            sentinelObserver.observe(sentinel);
+        } else if (!hasMore) {
+            toggleLoader(false);
+        }
+    })();
+</script>
