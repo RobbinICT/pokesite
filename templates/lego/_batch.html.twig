@@ -8,7 +8,7 @@
         ? asset('images/lego/' ~ m.identifier|url_encode ~ '.png')
         : m.url %}
     {% include '_components/card.html.twig' with {
-        href: m.getBricklinkUrl(),
+        href: m.getBricklinkUrl() ?? m.url ?? '#',
         target: '_blank',
         img_src: img_src,
         img_class: 'pk-card__img--figure',

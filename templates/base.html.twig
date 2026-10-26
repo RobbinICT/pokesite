@@ -62,6 +62,9 @@
                     {% if config.getIsSuperActionsEnabled() == 'true' %}
                         <a href="{{ path('upload_file') }}" class="nav-tab">Upload</a>
                     {% endif %}
+                    {% if is_granted('ROLE_ADMIN') %}
+                        <a href="{{ path('admin_index') }}" class="nav-tab ml-auto">Admin</a>
+                    {% endif %}
                 </nav>
             </div>
         </header>

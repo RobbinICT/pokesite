@@ -45,6 +45,11 @@ class Pokemon
         $this->list = $list;
     }
 
+    public function getId(): int
+    {
+        return $this->id;
+    }
+
     public function getUniqueIdentifier(): string
     {
         return $this->getDexNr().'_'.$this->getName().'_'.$this->getSerie().'_'.$this->getSerieNr();
@@ -142,7 +147,7 @@ class Pokemon
         return $this->url;
     }
 
-    public function setUrl(string $url): void
+    public function setUrl(?string $url): void
     {
         $this->url = $url;
     }

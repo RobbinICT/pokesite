@@ -33,8 +33,23 @@ class Minifigure
         $this->name = $name;
     }
 
-    public function getBricklinkUrl(): string
+    public const TEMPORARY_PREFIX = 'temp-';
+
+    /**
+     * Figures that are not on BrickLink yet get a placeholder identifier
+     * like "temp-venom" until the real one is known.
+     */
+    public function isTemporary(): bool
     {
+        return str_starts_with($this->identifier, self::TEMPORARY_PREFIX);
+    }
+
+    public function getBricklinkUrl(): ?string
+    {
+        if ($this->isTemporary())
+        {
+            return null;
+        }
         return 'https://www.bricklink.com/v2/catalog/catalogitem.page?M='.$this->identifier;
     }
 

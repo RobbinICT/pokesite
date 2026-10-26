@@ -83,6 +83,9 @@ class DatabaseManager
         ]);
 
         foreach ($minifigures as $minifigure) {
+            if ($minifigure->isTemporary()) {
+                continue;
+            }
             try {
                 $response = $client->request('GET', $minifigure->getBricklinkUrl());
                 $content = $response->getContent();

@@ -1,0 +1,132 @@
+{#
+    Admin shell: top bar, collectable sidebar (drawer on small screens) and toasts.
+    Params: collectable (current CollectableType), nav (list of {type, count})
+#}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex">
+        <meta name="theme-color" content="#3B4CCA" media="(prefers-color-scheme: light)">
+        <meta name="theme-color" content="#0a0a0a" media="(prefers-color-scheme: dark)">
+        <title>{% block title %}{{ collectable.label }}{% endblock %} · Pokésite admin</title>
+        {{ encore_entry_link_tags('app') }}
+    </head>
+
+    <body class="min-h-screen">
+        <header class="admin-topbar">
+            <button type="button" class="icon-btn -ml-1 lg:hidden" data-drawer-open aria-label="Open menu" aria-controls="admin-sidebar">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+            </button>
+
+            <a href="{{ path('admin_index') }}" class="brand text-base sm:text-lg">
+                <span class="brand__mark">
+                    <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/>
+                        <path d="M3 12h6a3 3 0 1 0 6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                    </svg>
+                </span>
+                <span>Pokésite <span class="font-semibold text-gray-400 dark:text-gray-500">admin</span></span>
+            </a>
+
+            <div class="ml-auto flex items-center gap-1 sm:gap-2">
+                <a href="{{ path('show_final_pokemon') }}" class="nav-tab hidden sm:inline-flex sm:items-center sm:gap-1.5" target="_blank" rel="noopener">
+                    View site
+                    <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>
+                </a>
+                <span class="hidden items-center gap-2 pl-2 text-sm font-semibold text-gray-700 md:flex dark:text-gray-300">
+                    <span class="grid h-8 w-8 place-items-center rounded-full bg-pokeyellow text-sm font-bold uppercase text-gray-900">{{ app.user.userIdentifier|first }}</span>
+                    {{ app.user.userIdentifier }}
+                </span>
+                <a href="{{ path('admin_logout') }}" class="icon-btn" title="Log out" aria-label="Log out">
+                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l5-5-5-5M15 12H3"/></svg>
+                </a>
+            </div>
+        </header>
+
+        <div class="mx-auto flex w-full max-w-screen-2xl">
+            <div class="admin-backdrop" data-drawer-close hidden></div>
+            <aside id="admin-sidebar" class="admin-sidebar" aria-label="Collectables">
+                <div class="mb-2 flex items-center justify-between lg:hidden">
+                    <span class="px-3 text-sm font-bold">Menu</span>
+                    <button type="button" class="icon-btn" data-drawer-close aria-label="Close menu">
+                        <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                    </button>
+                </div>
+
+                <p class="admin-nav-heading">Collectables</p>
+                <nav class="flex flex-col gap-1">
+                    {% for entry in nav %}
+                        {% set is_active = entry.type.key == collectable.key %}
+                        <a href="{{ path('admin_list', { type: entry.type.key }) }}"
+                           class="admin-nav-item {{ is_active ? 'admin-nav-item--active' }}"
+                           {{ is_active ? 'aria-current="page"' }}>
+                            <svg class="h-5 w-5 flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ entry.type.icon|raw }}</svg>
+                            <span class="truncate">{{ entry.type.label }}</span>
+                            <span class="admin-nav-count">{{ entry.count|number_format(0, ',', '.') }}</span>
+                        </a>
+                    {% endfor %}
+                </nav>
+
+                <div class="mt-auto border-t border-gray-200 pt-3 sm:hidden dark:border-gray-800">
+                    <a href="{{ path('show_final_pokemon') }}" class="admin-nav-item" target="_blank" rel="noopener">View site ↗</a>
+                </div>
+            </aside>
+
+            <main class="min-w-0 flex-1 px-3 pb-16 pt-5 sm:px-6 lg:pt-7">
+                {% block body %}{% endblock %}
+            </main>
+        </div>
+
+        {# Toasts from flash messages #}
+        <div class="pointer-events-none fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-2" aria-live="polite">
+            {% for type, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="toast" role="status" data-toast="{{ type }}">
+                        {% if type == 'success' %}
+                            <span class="grid h-6 w-6 flex-none place-items-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L19 7"/></svg>
+                            </span>
+                        {% else %}
+                            <span class="grid h-6 w-6 flex-none place-items-center rounded-full {{ type == 'warning' ? 'bg-pokeyellow/30 text-yellow-700 dark:text-pokeyellow' : 'bg-red-100 text-pokered dark:bg-red-900/50 dark:text-red-400' }}">
+                                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 7v6M12 17h.01"/></svg>
+                            </span>
+                        {% endif %}
+                        <p class="flex-1 pt-0.5">{{ message }}</p>
+                        <button type="button" class="-m-1 rounded-full p-1 text-gray-400 hover:text-gray-700 dark:hover:text-white" data-toast-close aria-label="Dismiss">
+                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                        </button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <script>
+            (function () {
+                // Sidebar drawer (small screens)
+                const sidebar = document.getElementById('admin-sidebar');
+                const backdrop = document.querySelector('.admin-backdrop');
+                const setDrawer = (open) => {
+                    sidebar.classList.toggle('admin-sidebar--open', open);
+                    backdrop.hidden = !open;
+                };
+                document.querySelectorAll('[data-drawer-open]').forEach((el) => el.addEventListener('click', () => setDrawer(true)));
+                document.querySelectorAll('[data-drawer-close]').forEach((el) => el.addEventListener('click', () => setDrawer(false)));
+                document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setDrawer(false); });
+
+                // Toasts: auto-dismiss (warnings/errors stay a bit longer)
+                document.querySelectorAll('[data-toast]').forEach((toast, i) => {
+                    const hide = () => {
+                        toast.classList.add('toast--hide');
+                        setTimeout(() => toast.remove(), 300);
+                    };
+                    toast.querySelector('[data-toast-close]').addEventListener('click', hide);
+                    setTimeout(hide, (toast.dataset.toast === 'success' ? 4000 : 8000) + i * 300);
+                });
+            })();
+        </script>
+        {% block javascripts %}{% endblock %}
+    </body>
+</html>
