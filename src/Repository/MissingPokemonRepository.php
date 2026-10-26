@@ -2,24 +2,16 @@
 
 namespace App\Repository;
 
-use App\Service\PokemonManager;
 use Doctrine\ORM\EntityRepository;
 
 class MissingPokemonRepository extends EntityRepository
 {
     public function findAllMissingPokemon(
         ?string $search_term,
-        bool $exclude_paradox_rift,
         ?int $offset = null,
         ?int $limit = null
     ) {
         $qb = $this->createQueryBuilder('q');
-        if ($exclude_paradox_rift === true)
-        {
-            $qb
-                ->andWhere('q.serie != :paradox_rift')
-                ->setParameter('paradox_rift', PokemonManager::SERIE_SV_PARADOX_RIFT);
-        }
 
         if ($search_term)
         {
@@ -44,15 +36,9 @@ class MissingPokemonRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function countMissingPokemon(?string $search_term, bool $exclude_paradox_rift): int
+    public function countMissingPokemon(?string $search_term = null): int
     {
         $qb = $this->createQueryBuilder('q')->select('COUNT(q.id)');
-
-        if ($exclude_paradox_rift === true)
-        {
-            $qb->andWhere('q.serie != :paradox_rift')
-                ->setParameter('paradox_rift', PokemonManager::SERIE_SV_PARADOX_RIFT);
-        }
 
         if ($search_term)
         {

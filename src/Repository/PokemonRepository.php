@@ -42,6 +42,18 @@ class PokemonRepository extends EntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    public function countPokemon(bool $only_show_final_list = false): int
+    {
+        $qb = $this->createQueryBuilder('q')->select('COUNT(q.id)');
+        if ($only_show_final_list)
+        {
+            $qb->where('q.list = :f_list')
+                ->setParameter('f_list', 'F');
+        }
+
+        return (int) $qb->getQuery()->getSingleScalarResult();
+    }
+
     public function getPokemonSerieNumbersBySerie(string $serie_name): array
     {
         return $this->createQueryBuilder('q')

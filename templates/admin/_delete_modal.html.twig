@@ -1,0 +1,110 @@
+{#
+    Shared delete confirmation. Any element with data-delete-action opens it;
+    its data-* attributes fill in the item details:
+      data-delete-action, data-delete-token, data-delete-title,
+      data-delete-subtitle, data-delete-image
+    Bulk mode (data-delete-bulk) instead reads JSON arrays from
+      data-delete-ids and data-delete-titles.
+    Params: collectable, return_url
+#}
+<dialog id="delete-dialog" class="admin-dialog" aria-labelledby="delete-dialog-title">
+    <form method="post" data-delete-form>
+        <input type="hidden" name="_token" value="">
+        <input type="hidden" name="_return" value="{{ return_url }}">
+        <div data-delete-ids></div>
+        <div class="flex gap-4 p-5">
+            <img class="thumb h-20 w-14" alt="" data-delete-image hidden>
+            <div class="min-w-0 flex-1">
+                <h2 id="delete-dialog-title" class="text-base font-bold" data-delete-heading>Delete this {{ collectable.itemLabel }}?</h2>
+                <p class="mt-1 text-sm text-gray-600 dark:text-gray-400" data-delete-single>
+                    <span class="font-semibold text-gray-900 dark:text-white" data-delete-title></span>
+                    <span class="block text-xs" data-delete-subtitle></span>
+                </p>
+                <ul class="mt-1 space-y-0.5 text-sm font-semibold text-gray-900 dark:text-white" data-delete-list hidden></ul>
+                <p class="mt-3 text-sm text-gray-500 dark:text-gray-400" data-delete-text>This removes it from the site and deletes its local image. This can't be undone.</p>
+            </div>
+        </div>
+        <div class="flex justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
+            <button type="button" class="btn btn--ghost" data-delete-cancel autofocus>Cancel</button>
+            <button type="submit" class="btn btn--danger">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>
+                <span data-delete-submit>Delete</span>
+            </button>
+        </div>
+    </form>
+</dialog>
+
+<script>
+    (function () {
+        const dialog = document.getElementById('delete-dialog');
+        const form = dialog.querySelector('[data-delete-form]');
+        const image = dialog.querySelector('[data-delete-image]');
+        const heading = dialog.querySelector('[data-delete-heading]');
+        const single = dialog.querySelector('[data-delete-single]');
+        const list = dialog.querySelector('[data-delete-list]');
+        const ids = dialog.querySelector('[data-delete-ids]');
+        const text = dialog.querySelector('[data-delete-text]');
+        const submit = dialog.querySelector('[data-delete-submit]');
+        const itemLabel = {{ collectable.itemLabel|json_encode|raw }};
+        const label = {{ collectable.label|json_encode|raw }};
+
+        const openSingle = (d) => {
+            heading.textContent = 'Delete this ' + itemLabel + '?';
+            dialog.querySelector('[data-delete-title]').textContent = d.deleteTitle;
+            dialog.querySelector('[data-delete-subtitle]').textContent = d.deleteSubtitle || '';
+            image.hidden = !d.deleteImage;
+            image.src = d.deleteImage || '';
+            single.hidden = false;
+            list.hidden = true;
+            ids.replaceChildren();
+            text.textContent = 'This removes it from the site and deletes its local image. This can\'t be undone.';
+            submit.textContent = 'Delete';
+        };
+
+        const openBulk = (d) => {
+            const selectedIds = JSON.parse(d.deleteIds || '[]');
+            const titles = JSON.parse(d.deleteTitles || '[]');
+            const n = selectedIds.length;
+            heading.textContent = 'Delete ' + n + ' ' + (n === 1 ? itemLabel : label) + '?';
+            image.hidden = true;
+            single.hidden = true;
+            list.hidden = false;
+            list.replaceChildren(...titles.slice(0, 5).map((title) => {
+                const li = document.createElement('li');
+                li.className = 'truncate';
+                li.textContent = title;
+                return li;
+            }));
+            if (titles.length > 5) {
+                const more = document.createElement('li');
+                more.className = 'text-xs font-normal text-gray-500 dark:text-gray-400';
+                more.textContent = '+ ' + (titles.length - 5) + ' more';
+                list.append(more);
+            }
+            ids.replaceChildren(...selectedIds.map((id) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'ids[]';
+                input.value = id;
+                return input;
+            }));
+            text.textContent = 'This removes them from the site and deletes their local images. This can\'t be undone.';
+            submit.textContent = 'Delete ' + n;
+        };
+
+        document.querySelectorAll('[data-delete-action]').forEach((trigger) => {
+            trigger.addEventListener('click', (e) => {
+                e.preventDefault();
+                const d = trigger.dataset;
+                form.action = d.deleteAction;
+                form.elements._token.value = d.deleteToken;
+                'deleteBulk' in d ? openBulk(d) : openSingle(d);
+                dialog.showModal();
+            });
+        });
+
+        dialog.querySelector('[data-delete-cancel]').addEventListener('click', () => dialog.close());
+        // Click on the backdrop closes the dialog.
+        dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    })();
+</script>

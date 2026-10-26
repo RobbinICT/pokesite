@@ -80,6 +80,12 @@
         @apply aspect-card w-full object-cover;
     }
 
+    /* Portrait tile for product shots (e.g. LEGO minifigures). Compound
+       selector outranks the default aspect-card/object-cover utilities. */
+    .pk-card__img.pk-card__img--figure {
+        @apply aspect-[3/4] object-contain bg-white p-1 dark:bg-gray-900;
+    }
+
     .pk-card__caption {
         @apply flex flex-col gap-0.5 px-2 py-2 sm:px-3;
     }
@@ -126,6 +132,309 @@
     .stat-pill {
         @apply inline-flex items-center gap-2 rounded-full bg-gray-100 px-4 py-1.5 text-sm
                font-semibold text-gray-700 dark:bg-gray-800 dark:text-gray-200;
+    }
+
+    /* ======================================================================
+       Admin
+       ====================================================================== */
+    .admin-topbar {
+        @apply sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-gray-200/70
+               bg-white/85 px-3 backdrop-blur-md sm:px-5
+               dark:border-gray-800/70 dark:bg-gray-950/85;
+    }
+
+    /* ======================================================================
+       Sidebar navigation (public site + admin)
+       ====================================================================== */
+    /* Off-canvas drawer on small screens, sticky column from lg up. */
+    .sidebar {
+        @apply fixed inset-y-0 left-0 z-50 flex w-64 -translate-x-full flex-col gap-1 border-r
+               border-gray-200 bg-white px-3 py-4 transition-transform duration-200
+               lg:sticky lg:top-14 lg:z-auto lg:h-[calc(100vh-3.5rem)] lg:translate-x-0
+               lg:bg-transparent dark:border-gray-800 dark:bg-gray-900 lg:dark:bg-transparent;
+    }
+
+    .sidebar--open {
+        @apply translate-x-0 shadow-2xl;
+    }
+
+    .sidebar-backdrop {
+        @apply fixed inset-0 z-40 bg-gray-950/40 backdrop-blur-sm lg:hidden;
+    }
+
+    .side-nav-heading {
+        @apply px-3 pb-1 pt-2 text-[11px] font-bold uppercase tracking-wider text-gray-400 dark:text-gray-500;
+    }
+
+    .side-nav-item {
+        @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-gray-600
+               transition-colors hover:bg-gray-100 hover:text-gray-900
+               dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
+    }
+
+    .side-nav-item--active {
+        @apply bg-pokeblue text-white shadow-sm hover:bg-pokeblue hover:text-white
+               dark:text-white dark:hover:bg-pokeblue;
+    }
+
+    .side-nav-count {
+        @apply ml-auto rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold tabular-nums
+               text-gray-500 dark:bg-gray-800 dark:text-gray-400;
+    }
+
+    .side-nav-item--active .side-nav-count {
+        @apply bg-white/20 text-white;
+    }
+
+    /* Foldable section: <details class="side-nav-section"><summary class="side-nav-item side-nav-summary"> */
+    .side-nav-summary {
+        @apply cursor-pointer list-none select-none text-gray-900 dark:text-white;
+    }
+
+    .side-nav-summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .side-nav-chevron {
+        @apply ml-auto h-4 w-4 flex-none text-gray-400 transition-transform duration-200;
+    }
+
+    .side-nav-section[open] > .side-nav-summary .side-nav-chevron {
+        @apply rotate-90;
+    }
+
+    .side-nav-sub {
+        @apply mb-1 ml-5 mt-0.5 flex flex-col gap-0.5 border-l border-gray-200 pl-2 dark:border-gray-800;
+    }
+
+    .side-nav-sub .side-nav-item {
+        @apply py-1.5;
+    }
+
+    /* ======================================================================
+       Admin
+       ====================================================================== */
+    .admin-panel {
+        @apply rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900;
+    }
+
+    /* Buttons --------------------------------------------------------------- */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full px-4 py-2
+               text-sm font-semibold shadow-sm transition focus:outline-none focus-visible:ring-2
+               focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-950;
+    }
+
+    .btn--primary {
+        @apply bg-pokeblue text-white hover:bg-pokeblue-dark focus-visible:ring-pokeblue;
+    }
+
+    .btn--danger {
+        @apply bg-pokered text-white hover:bg-pokered-dark focus-visible:ring-pokered;
+    }
+
+    .btn--ghost {
+        @apply bg-white text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50
+               focus-visible:ring-pokeblue dark:bg-gray-900 dark:text-gray-200 dark:ring-gray-700
+               dark:hover:bg-gray-800;
+    }
+
+    .icon-btn {
+        @apply grid h-9 w-9 flex-none place-items-center rounded-full text-gray-500 transition
+               hover:bg-gray-100 hover:text-gray-900 focus:outline-none focus-visible:ring-2
+               focus-visible:ring-pokeblue dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
+    }
+
+    .icon-btn--danger {
+        @apply hover:bg-red-50 hover:text-pokered dark:hover:bg-red-950/60 dark:hover:text-red-400;
+    }
+
+    /* Form controls --------------------------------------------------------- */
+    .admin-input {
+        @apply block w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900
+               placeholder-gray-400 shadow-sm outline-none transition
+               focus:border-pokeblue focus:ring-2 focus:ring-pokeblue/30
+               dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:placeholder-gray-500;
+    }
+
+    .admin-input--error {
+        @apply border-pokered focus:border-pokered focus:ring-pokered/30 dark:border-red-500;
+    }
+
+    /* Compact select for list filters; highlighted while a filter is active */
+    .filter-select {
+        @apply w-auto max-w-[12rem] cursor-pointer rounded-full py-1.5 pl-3 pr-8 text-xs font-semibold text-gray-600
+               dark:text-gray-300;
+    }
+
+    .filter-select--active {
+        @apply border-pokeblue bg-pokeblue/5 text-pokeblue dark:border-blue-400 dark:bg-pokeblue/15 dark:text-blue-300;
+    }
+
+    /* Combobox: text input with a filterable suggestion list (DatalistType) */
+    .combobox {
+        @apply relative;
+    }
+
+    .combobox__toggle {
+        @apply absolute inset-y-0 right-0 grid w-10 place-items-center text-gray-400 hover:text-gray-700
+               dark:hover:text-white;
+    }
+
+    .combobox__toggle[aria-expanded="true"] svg {
+        @apply rotate-180;
+    }
+
+    .combobox__list {
+        @apply absolute inset-x-0 top-full z-20 mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200
+               bg-white py-1 text-sm shadow-lg dark:border-gray-700 dark:bg-gray-900;
+    }
+
+    .combobox__option {
+        @apply cursor-pointer truncate px-3 py-1.5 text-gray-800 dark:text-gray-200;
+    }
+
+    .combobox__option[aria-selected="true"] {
+        @apply bg-pokeblue text-white;
+    }
+
+    .combobox__option mark {
+        @apply bg-transparent font-bold text-inherit;
+    }
+
+    .admin-checkbox {
+        @apply h-4 w-4 cursor-pointer rounded border-gray-300 text-pokeblue accent-pokeblue focus:ring-2 focus:ring-pokeblue/40
+               dark:border-gray-600 dark:bg-gray-950;
+    }
+
+    /* Floating bar shown while list rows are selected */
+    .bulk-bar {
+        @apply fixed inset-x-0 z-30 mx-auto flex w-fit max-w-[calc(100vw-2rem)] items-center gap-3 rounded-full
+               border border-gray-200 bg-white py-2 pl-5 pr-2 text-sm shadow-xl
+               dark:border-gray-700 dark:bg-gray-900;
+        bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    }
+
+    .admin-label {
+        @apply mb-1.5 block text-sm font-semibold text-gray-800 dark:text-gray-200;
+    }
+
+    .admin-help {
+        @apply mt-1.5 text-xs text-gray-500 dark:text-gray-400;
+    }
+
+    .admin-error {
+        @apply mt-1.5 text-xs font-semibold text-pokered dark:text-red-400;
+    }
+
+    /* Table ----------------------------------------------------------------- */
+    .data-table {
+        @apply w-full text-left text-sm;
+    }
+
+    .data-table th {
+        @apply border-b border-gray-200 bg-gray-50/80 px-3 py-2.5 text-xs font-bold uppercase
+               tracking-wide text-gray-500 first:pl-4 last:pr-4
+               dark:border-gray-800 dark:bg-gray-900/80 dark:text-gray-400;
+    }
+
+    .data-table td {
+        @apply border-b border-gray-100 px-3 py-2 align-middle text-gray-700 first:pl-4 last:pr-4
+               dark:border-gray-800/70 dark:text-gray-300;
+    }
+
+    .data-table tbody tr {
+        @apply transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/40;
+    }
+
+    .data-table tbody tr:last-child td {
+        @apply border-b-0;
+    }
+
+    .sort-link {
+        @apply inline-flex items-center gap-1 hover:text-gray-900 dark:hover:text-white;
+    }
+
+    .thumb {
+        @apply h-14 w-10 flex-none rounded-md bg-white object-contain p-0.5 ring-1 ring-gray-200
+               dark:bg-gray-800 dark:ring-gray-700;
+    }
+
+    .badge {
+        @apply inline-flex items-center rounded-full bg-pokeyellow/25 px-2 py-0.5 text-[11px] font-semibold
+               text-yellow-800 dark:bg-pokeyellow/15 dark:text-pokeyellow;
+    }
+
+    /* Pagination ------------------------------------------------------------ */
+    .page-link {
+        @apply grid h-9 min-w-[2.25rem] place-items-center rounded-full px-2 text-sm font-semibold
+               tabular-nums text-gray-600 transition hover:bg-gray-100 hover:text-gray-900
+               dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-white;
+    }
+
+    .page-link--active {
+        @apply bg-pokeblue text-white hover:bg-pokeblue hover:text-white dark:text-white dark:hover:bg-pokeblue;
+    }
+
+    /* Toasts ---------------------------------------------------------------- */
+    .toast {
+        @apply pointer-events-auto flex w-80 max-w-[calc(100vw-2rem)] items-start gap-3 rounded-xl border
+               border-gray-200 bg-white p-3.5 text-sm text-gray-800 shadow-lg transition duration-300
+               dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100;
+    }
+
+    .toast--hide {
+        @apply translate-y-2 opacity-0;
+    }
+
+    /* Toggle switch: <button role="switch" aria-checked="…" class="switch"><span class="switch__thumb"> */
+    .switch {
+        @apply relative inline-flex h-6 w-11 flex-none cursor-pointer items-center rounded-full bg-gray-300
+               transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-pokeblue
+               focus-visible:ring-offset-2 disabled:cursor-wait dark:bg-gray-700 dark:focus-visible:ring-offset-gray-950;
+    }
+
+    .switch[aria-checked="true"] {
+        @apply bg-pokeblue;
+    }
+
+    .switch__thumb {
+        @apply inline-block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform;
+    }
+
+    .switch[aria-checked="true"] .switch__thumb {
+        @apply translate-x-[1.375rem];
+    }
+
+    /* Status pill for background tasks -------------------------------------- */
+    .status-pill {
+        @apply inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold;
+    }
+
+    .status-pill--idle {
+        @apply bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400;
+    }
+
+    .status-pill--running {
+        @apply bg-pokeblue/10 text-pokeblue dark:bg-pokeblue/25 dark:text-blue-300;
+    }
+
+    .status-pill--success {
+        @apply bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-400;
+    }
+
+    .status-pill--failed {
+        @apply bg-red-100 text-pokered dark:bg-red-900/50 dark:text-red-400;
+    }
+
+    /* Dialog ---------------------------------------------------------------- */
+    .admin-dialog {
+        @apply m-auto w-[min(26rem,calc(100vw-2rem))] rounded-2xl border border-gray-200 bg-white p-0
+               text-gray-900 shadow-2xl dark:border-gray-800 dark:bg-gray-900 dark:text-gray-100;
+    }
+
+    .admin-dialog::backdrop {
+        @apply bg-gray-950/50 backdrop-blur-sm;
     }
 }
 

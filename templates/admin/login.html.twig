@@ -1,0 +1,59 @@
+{# Params: last_username, error (AuthenticationException|null) #}
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noindex">
+        <title>Log in · Pokésite admin</title>
+        {{ encore_entry_link_tags('app') }}
+    </head>
+
+    <body class="grid min-h-screen place-items-center px-4 py-10">
+        <main class="w-full max-w-sm">
+            <div class="mb-6 flex flex-col items-center gap-3 text-center">
+                <span class="brand__mark h-12 w-12">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9" fill="currentColor" opacity="0.25"/>
+                        <path d="M3 12h6a3 3 0 1 0 6 0h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        <circle cx="12" cy="12" r="2.5" fill="currentColor"/>
+                    </svg>
+                </span>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">Pokésite admin</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Log in to manage your collection</p>
+                </div>
+            </div>
+
+            <form method="post" action="{{ path('admin_login') }}" class="admin-panel flex flex-col gap-4 p-6">
+                {% if error %}
+                    <div class="rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-pokered dark:bg-red-950/50 dark:text-red-400" role="alert">
+                        {{ error.messageKey|trans(error.messageData, 'security') }}
+                    </div>
+                {% endif %}
+
+                <div>
+                    <label for="username" class="admin-label">Username</label>
+                    <input type="text" id="username" name="_username" value="{{ last_username }}" class="admin-input"
+                           autocomplete="username" autocapitalize="none" required {{ last_username ? '' : 'autofocus' }}>
+                </div>
+                <div>
+                    <label for="password" class="admin-label">Password</label>
+                    <input type="password" id="password" name="_password" class="admin-input"
+                           autocomplete="current-password" required {{ last_username ? 'autofocus' : '' }}>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input type="checkbox" name="_remember_me" class="h-4 w-4 rounded border-gray-300 text-pokeblue focus:ring-pokeblue dark:border-gray-600 dark:bg-gray-800" checked>
+                    Keep me logged in for 30 days
+                </label>
+
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <button type="submit" class="btn btn--primary mt-1 w-full py-2.5">Log in</button>
+            </form>
+
+            <p class="mt-6 text-center">
+                <a href="{{ path('home') }}" class="text-sm font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">← Back to the site</a>
+            </p>
+        </main>
+    </body>
+</html>
