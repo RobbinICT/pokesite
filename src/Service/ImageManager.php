@@ -2,6 +2,7 @@
 
 namespace App\Service;
 
+use App\Admin\Type\PokemonCardType;
 use App\Entity\MissingPokemon;
 use App\Entity\Pokemon;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,74 +14,83 @@ class ImageManager
 {
     private EntityManagerInterface $entity_manager;
     private KernelInterface $kernel;
-    public function __construct(EntityManagerInterface $entity_manager, KernelInterface $kernel)
+    private CollectableImageStorage $image_storage;
+    private PokemonCardType $card_type;
+
+    public function __construct(EntityManagerInterface $entity_manager, KernelInterface $kernel, CollectableImageStorage $image_storage, PokemonCardType $card_type)
     {
         $this->entity_manager = $entity_manager;
         $this->kernel = $kernel;
+        $this->image_storage = $image_storage;
+        $this->card_type = $card_type;
     }
 
-    public function addImageUrls(): int
+    /**
+     * Looks up image URLs on Pokéllector for cards without one. Each card is
+     * tried once; a card that can't be matched is reported and skipped, so one
+     * bad card doesn't stop the rest.
+     *
+     * @return array{added: int, failed: array<string, string>} failed: card => reason
+     */
+    public function addImageUrls(): array
     {
-        $repo = $this->entity_manager->getRepository(Pokemon::class);
-        $batch_size = 20;
-        $added = 0;
-
-        $has_next_batch = true;
-        while ($has_next_batch)
-        {
-            $batch = $repo->getBatchOfPokemonWithoutURL($batch_size);
-            if (\count($batch) < $batch_size) {
-                $has_next_batch = false;
-            }
-
-            /** @var Pokemon $pokemon */
-            foreach ($batch as $pokemon)
-            {
-                $this->setImageHostingUrl($pokemon);
-                $added++;
-            }
-            $this->entity_manager->flush();
-            sleep(1);
-        }
-        $this->entity_manager->flush();
-        return $added;
-    }
-
-    public function downloadImages(): ?array
-    {
-        $pokemon_list = $this->entity_manager->getRepository(Pokemon::class)->getPokemon();
-        $path = $this->kernel->getProjectDir() . '/public/images/pokemon/';
-        $failed = [];
+        $cards = $this->entity_manager->getRepository(Pokemon::class)->getBatchOfPokemonWithoutURL();
+        $report = ['added' => 0, 'failed' => []];
 
         /** @var Pokemon $pokemon */
-        foreach ($pokemon_list as $pokemon) {
-            $filename = $pokemon->getUniqueIdentifierV2() . '.png';
-
-            // Check if the file already exists
-            if (file_exists($path . $filename)) {
-                continue;
-            }
-
-            $url = $pokemon->getUrl();
-
-            if (!filter_var($url, FILTER_VALIDATE_URL)) {
-                continue;
-            }
-
-            $image_content = file_get_contents($url);
-            if ($image_content === false) {
-                $failed[] = $pokemon->getName();
-                continue;
-            }
-            file_put_contents($path . $filename, $image_content);
-        }
-
-        if (!empty($failed))
+        foreach ($cards as $i => $pokemon)
         {
-            return $failed;
+            $label = sprintf('%s (%s %s)', $pokemon->getName(), $pokemon->getSerie(), $pokemon->getSerieNr());
+            try
+            {
+                if ($this->setImageHostingUrl($pokemon) === false)
+                {
+                    $report['failed'][$label] = 'no Pokéllector page for this serie';
+                    continue;
+                }
+                $report['added']++;
+            }
+            catch (\Throwable $e)
+            {
+                $report['failed'][$label] = mb_strimwidth(trim(preg_replace('/\s+/', ' ', $e->getMessage())), 0, 200, '…');
+            }
+
+            // Save and pause every 20 cards, to go easy on Pokéllector.
+            if (($i + 1) % 20 === 0)
+            {
+                $this->entity_manager->flush();
+                sleep(1);
+            }
+        }
+        $this->entity_manager->flush();
+
+        return $report;
+    }
+
+    /**
+     * Downloads card images that are not on the server yet.
+     *
+     * @return array{downloaded: int, failed: array<string, string>} failed: card => reason
+     */
+    public function downloadImages(): array
+    {
+        $report = ['downloaded' => 0, 'failed' => []];
+
+        /** @var Pokemon $pokemon */
+        foreach ($this->entity_manager->getRepository(Pokemon::class)->findAll() as $pokemon)
+        {
+            $result = $this->image_storage->downloadMissing($this->card_type, $pokemon);
+            if ($result === true)
+            {
+                $report['downloaded']++;
+            }
+            elseif (\is_string($result))
+            {
+                $report['failed'][sprintf('%s (%s %s)', $pokemon->getName(), $pokemon->getSerie(), $pokemon->getSerieNr())] = $result;
+            }
         }
 
-        return null;
+        return $report;
     }
 
     public function downloadImagesMissingPokemon()
@@ -88,6 +98,9 @@ class ImageManager
         $pokemon_list = $this->entity_manager->getRepository(MissingPokemon::class)->findAll();
         $path = $this->kernel->getProjectDir() . '/public/images/missing-pokemon/';
         $failed = [];
+        if (!is_dir($path) && !@mkdir($path, 0775, true) && !is_dir($path)) {
+            return ['the images/missing-pokemon folder is not writable'];
+        }
 
         /** @var MissingPokemon $pokemon */
         foreach ($pokemon_list as $pokemon) {
@@ -104,12 +117,10 @@ class ImageManager
                 continue;
             }
 
-            $image_content = file_get_contents($url);
-            if ($image_content === false) {
+            $image_content = @file_get_contents($url);
+            if ($image_content === false || @file_put_contents($path . $filename, $image_content) === false) {
                 $failed[] = $pokemon->getTitle();
-                continue;
             }
-            file_put_contents($path . $filename, $image_content);
         }
 
         if (!empty($failed))

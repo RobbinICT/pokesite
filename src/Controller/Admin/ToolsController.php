@@ -179,9 +179,10 @@ class ToolsController extends AbstractController
 
         $this->addFlash('success', $message);
         // Downloading can take minutes for a big import, so it runs in the background.
-        if ($key === 'minifigures' && $imported > 0 && $this->task_runner->start('minifigure_downloads'))
+        $download_task = ['cards' => 'card_images', 'minifigures' => 'minifigure_downloads'][$key];
+        if ($imported > 0 && $this->task_runner->start($download_task))
         {
-            $this->addFlash('success', 'Downloading the minifigure images in the background. You can follow it below.');
+            $this->addFlash('success', sprintf('Downloading the %s images in the background. You can follow it below.', $key === 'cards' ? 'card' : 'minifigure'));
         }
         return null;
     }

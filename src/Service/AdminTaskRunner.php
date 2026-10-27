@@ -39,6 +39,11 @@ class AdminTaskRunner
                 'description' => 'Looks up new missing cards on Pokéllector and removes the ones you now own.',
                 'command' => ['update:missing:pokemon'],
             ],
+            'card_images' => [
+                'label' => 'Download card images',
+                'description' => 'Looks up image URLs on Pokéllector for cards without one, then downloads the card images that are not on the server yet. Runs automatically after a cards import.',
+                'command' => ['images:add:urls-download'],
+            ],
             'minifigure_images' => [
                 'label' => 'Fill in minifigure images',
                 'description' => 'Sets BrickLink\'s catalog image for minifigures without an image URL. Temporary IDs are skipped.',
