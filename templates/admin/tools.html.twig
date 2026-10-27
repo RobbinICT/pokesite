@@ -1,84 +1,22 @@
 {% extends 'admin/layout.html.twig' %}
 
 {#
-    Params: imports (list of {key, title, columns, optional_columns, replace_label, replace_text, form}),
-            tasks (list of {key, label, description, status {state, started_at, finished_at, output}})
+    Params: sections (list of {collectable, health, fix_tasks, imports, tasks}, see ToolsController::index())
 #}
 
-{% set state_labels = { idle: 'Never run', running: 'Running…', success: 'Done', failed: 'Failed' } %}
+{% set state_labels = { idle: 'Never run', running: 'Running', success: 'Done', failed: 'Failed', cancelled: 'Cancelled' } %}
 
 {% block title %}Tools{% endblock %}
 
 {% block body %}
     <div class="mb-5">
         <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Tools</h1>
-        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Import cards and run maintenance jobs.</p>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Imports and maintenance jobs per collectable.</p>
     </div>
 
-    <div class="grid max-w-5xl items-start gap-5 xl:grid-cols-2">
-        {# CSV imports ----------------------------------------------------------- #}
-        {% for import in imports %}
-            {% set import_form = import.form %}
-            {% form_theme import_form 'admin/_form_theme.html.twig' %}
-            <section class="admin-panel">
-                {{ form_start(import_form, { attr: { novalidate: 'novalidate', 'data-import-form': true, 'data-replace-title': import.replace_label ~ '?', 'data-replace-text': import.replace_text } }) }}
-                    <div class="p-5">
-                        <h2 class="text-base font-bold">{{ import.title }}</h2>
-                        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                            Columns: <code class="font-mono text-xs">{{ import.columns|join(', ') }}</code>
-                            {% if import.optional_columns %}
-                                <span class="whitespace-nowrap">(optional: <code class="font-mono text-xs">{{ import.optional_columns|join(', ') }}</code>)</span>
-                            {% endif %}
-                        </p>
-                        <div class="mt-4 grid gap-x-4 gap-y-5 sm:grid-cols-2">
-                            {{ form_errors(import_form) }}
-                            {% for child in import_form %}
-                                {% if child.vars.name != '_token' %}{{ form_row(child) }}{% endif %}
-                            {% endfor %}
-                        </div>
-                    </div>
-                    <div class="flex justify-end rounded-b-xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
-                        <button type="submit" class="btn btn--primary">
-                            <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
-                            Import
-                        </button>
-                    </div>
-                {{ form_end(import_form) }}
-            </section>
-        {% endfor %}
-
-        {# Background tasks ----------------------------------------------------- #}
-        {% for task in tasks %}
-            {% set status = task.status %}
-            <section class="admin-panel p-5" data-task="{{ task.key }}" data-task-label="{{ task.label }}"
-                     data-status-url="{{ path('admin_tools_status', { task: task.key }) }}" data-state="{{ status.state }}">
-                <div class="flex flex-wrap items-start gap-3">
-                    <div class="min-w-0 flex-1">
-                        <h2 class="text-base font-bold">{{ task.label }}</h2>
-                        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ task.description }}</p>
-                    </div>
-                    <span class="status-pill status-pill--{{ status.state }}" data-task-pill>
-                        {% if status.state == 'running' %}<span class="spinner h-3 w-3 border"></span>{% endif %}
-                        <span data-task-pill-label>{{ state_labels[status.state] }}</span>
-                    </span>
-                </div>
-
-                <p class="mt-3 text-xs text-gray-500 dark:text-gray-400" data-task-time
-                   data-started="{{ status.started_at }}" data-finished="{{ status.finished_at }}"></p>
-
-                <details class="mt-2" data-task-output-wrap {{ status.output ? '' : 'hidden' }}>
-                    <summary class="cursor-pointer text-xs font-semibold text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">Output</summary>
-                    <pre class="mt-2 max-h-56 overflow-auto rounded-lg bg-gray-950 p-3 text-[11px] leading-relaxed text-gray-200" data-task-output>{{ status.output }}</pre>
-                </details>
-
-                <form method="post" action="{{ path('admin_tools_run', { task: task.key }) }}" class="mt-4">
-                    <input type="hidden" name="_token" value="{{ csrf_token('run-' ~ task.key) }}">
-                    <button type="submit" class="btn btn--ghost" data-task-run {{ status.state == 'running' ? 'disabled' }}>
-                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10-6.5-10-6.5z"/></svg>
-                        Run now
-                    </button>
-                </form>
-            </section>
+    <div class="max-w-6xl space-y-6">
+        {% for section in sections %}
+            {% include 'admin/tools/_section.html.twig' with { section: section, state_labels: state_labels } only %}
         {% endfor %}
     </div>
 
@@ -121,60 +59,224 @@
                 pending.requestSubmit();
             });
 
-            // Background task status ---------------------------------------------
+            // Drag & drop CSV upload ------------------------------------------------
+            // Shows the file, its row count and whether the columns match, and
+            // picks the delimiter from the header line.
+            document.querySelectorAll('[data-import-form]').forEach((form) => {
+                const zone = form.querySelector('[data-dropzone]');
+                const input = form.querySelector('[data-dropzone-input]');
+                const delimiter = form.querySelector('select[name$="[delimiter]"]');
+                const columns = JSON.parse(form.dataset.columns);
+
+                const describe = (file) => {
+                    zone.querySelector('[data-dropzone-empty]').hidden = true;
+                    zone.querySelector('[data-dropzone-file]').hidden = false;
+                    zone.querySelector('[data-dropzone-name]').textContent = file.name;
+                    const meta = zone.querySelector('[data-dropzone-meta]');
+                    const check = zone.querySelector('[data-dropzone-check]');
+                    const size = file.size < 1024 * 1024 ? Math.ceil(file.size / 1024) + ' KB' : (file.size / 1024 / 1024).toFixed(1) + ' MB';
+                    meta.textContent = size;
+                    check.textContent = '';
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const lines = String(reader.result).replace(/^﻿/, '').split(/\r\n|\n|\r/).filter((line) => line.trim() !== '');
+                        if (!lines.length) {
+                            check.className = 'mt-1 block text-xs font-semibold text-pokered dark:text-red-400';
+                            check.textContent = '✗ The file is empty';
+                            return;
+                        }
+                        // The delimiter that splits the header into the most columns wins.
+                        const header = lines[0];
+                        const best = [';', ',', '\t'].map((d) => [d, header.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+                        if (delimiter && [...delimiter.options].some((o) => o.value === best)) delimiter.value = best;
+
+                        const rows = lines.length - 1;
+                        meta.textContent = size + ' · ' + rows + ' row' + (rows === 1 ? '' : 's') + ' · ' + ({ ';': 'semicolons', ',': 'commas', '\t': 'tabs' })[best];
+                        const found = header.split(best).map((c) => c.trim().replace(/^"|"$/g, ''));
+                        const missing = columns.filter((c) => !found.includes(c));
+                        check.className = 'mt-1 block text-xs font-semibold ' + (missing.length ? 'text-pokered dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400');
+                        check.textContent = missing.length ? '✗ Missing column' + (missing.length === 1 ? '' : 's') + ': ' + missing.join(', ') : '✓ All columns present';
+                    };
+                    reader.readAsText(file);
+                };
+
+                input.addEventListener('change', () => { if (input.files.length) describe(input.files[0]); });
+                ['dragenter', 'dragover'].forEach((type) => zone.addEventListener(type, (e) => {
+                    e.preventDefault();
+                    zone.classList.add('dropzone--over');
+                }));
+                ['dragleave', 'drop'].forEach((type) => zone.addEventListener(type, (e) => {
+                    e.preventDefault();
+                    if (type === 'dragleave' && zone.contains(e.relatedTarget)) return;
+                    zone.classList.remove('dropzone--over');
+                }));
+                zone.addEventListener('drop', (e) => {
+                    if (!e.dataTransfer.files.length) return;
+                    input.files = e.dataTransfer.files;
+                    describe(input.files[0]);
+                });
+            });
+            // Dropping a file next to a zone would otherwise open it in the browser.
+            ['dragover', 'drop'].forEach((type) => window.addEventListener(type, (e) => {
+                if (!e.target.closest || !e.target.closest('[data-dropzone]')) e.preventDefault();
+            }));
+
+            // Background tasks -----------------------------------------------------
             const labels = {{ state_labels|json_encode|raw }};
-            const formatTime = (ts) => new Date(ts * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
-
-            const render = (card, status) => {
-                const previous = card.dataset.state;
-                card.dataset.state = status.state;
-
-                const pill = card.querySelector('[data-task-pill]');
-                pill.className = 'status-pill status-pill--' + status.state;
-                pill.innerHTML = (status.state === 'running' ? '<span class="spinner h-3 w-3 border"></span>' : '') + '<span></span>';
-                pill.lastElementChild.textContent = labels[status.state];
-
-                const time = card.querySelector('[data-task-time]');
-                if (status.state === 'running' && status.started_at) {
-                    time.textContent = 'Started ' + formatTime(status.started_at);
-                } else if (status.finished_at) {
-                    time.textContent = 'Last run ' + formatTime(status.finished_at);
-                } else {
-                    time.textContent = '';
+            const relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const fullDate = (ts) => new Date(ts * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+            const ago = (ts) => {
+                const seconds = Math.round(ts - Date.now() / 1000);
+                const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+                for (const [unit, size] of units) {
+                    if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
                 }
+                return 'just now';
+            };
+            const duration = (s) => {
+                if (s == null) return '';
+                if (s < 60) return s + 's';
+                if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+                return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+            };
+            const clock = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
 
-                card.querySelector('[data-task-output-wrap]').hidden = !status.output;
-                const output = card.querySelector('[data-task-output]');
-                output.textContent = status.output;
-                output.scrollTop = output.scrollHeight;
-                card.querySelector('[data-task-run]').disabled = status.state === 'running';
+            const rows = [...document.querySelectorAll('[data-task]')];
+            const statuses = new Map();
 
-                if (previous === 'running' && status.state !== 'running') {
-                    const label = card.dataset.taskLabel;
-                    showToast(status.state === 'success' ? 'success' : 'error', status.state === 'success' ? label + ' finished.' : label + ' failed. See the output.');
+            // Times change without new data ("2 min ago", the running timer).
+            const renderTime = (row) => {
+                const status = statuses.get(row);
+                const time = row.querySelector('[data-task-time]');
+                if (status.state === 'running' && status.started_at) {
+                    time.textContent = 'Running for ' + clock(Math.max(0, Math.round(Date.now() / 1000 - status.started_at)));
+                    time.title = 'Started ' + fullDate(status.started_at);
+                } else if (status.finished_at) {
+                    time.textContent = ({ failed: 'Failed ', cancelled: 'Cancelled ' })[status.state] ?? 'Last run ';
+                    time.textContent += ago(status.finished_at)
+                        + (status.duration != null ? ' · took ' + duration(status.duration) : '');
+                    time.title = fullDate(status.finished_at);
+                } else {
+                    time.textContent = status.state === 'idle' ? 'Never run' : '';
+                    time.removeAttribute('title');
                 }
             };
 
-            document.querySelectorAll('[data-task]').forEach((card) => {
-                const time = card.querySelector('[data-task-time]');
-                render(card, {
-                    state: card.dataset.state,
-                    started_at: Number(time.dataset.started) || null,
-                    finished_at: Number(time.dataset.finished) || null,
-                    output: card.querySelector('[data-task-output]').textContent,
-                });
+            const render = (row, status) => {
+                const previous = row.dataset.state;
+                statuses.set(row, status);
+                row.dataset.state = status.state;
+                const running = status.state === 'running';
 
+                const pill = row.querySelector('[data-task-pill]');
+                pill.className = 'status-pill status-pill--' + status.state;
+                pill.innerHTML = running ? '<span class="spinner h-3 w-3 border"></span><span></span>' : '<span></span>';
+                pill.lastElementChild.textContent = labels[status.state];
+                renderTime(row);
+
+                // History: oldest left, newest right.
+                const history = row.querySelector('[data-task-history]');
+                history.replaceChildren(...(status.history || []).slice().reverse().map((run) => {
+                    const dot = document.createElement('span');
+                    dot.className = 'history-dot history-dot--' + run.state;
+                    dot.title = labels[run.state] + (run.started_at ? ' · ' + fullDate(run.started_at) : '') + (run.duration != null ? ' · ' + duration(run.duration) : '');
+                    return dot;
+                }));
+                history.hidden = (status.history || []).length < 2;
+
+                // Progress: a bar with counts when the command reports them, otherwise an indeterminate bar.
+                const progress = row.querySelector('[data-task-progress]');
+                progress.hidden = !running;
+                if (running) {
+                    const bar = row.querySelector('[data-task-progress-bar]');
+                    const fill = row.querySelector('[data-task-progress-fill]');
+                    const label = row.querySelector('[data-task-progress-label]');
+                    const p = status.progress;
+                    bar.classList.toggle('progress-bar--indeterminate', !p || !p.total);
+                    if (p && p.total) {
+                        const percent = Math.min(100, Math.round(p.current / p.total * 100));
+                        fill.style.width = percent + '%';
+                        bar.setAttribute('aria-valuenow', percent);
+                        label.textContent = p.current + ' / ' + p.total + (p.label ? ' · ' + p.label : '') + ' · ' + percent + '%';
+                    } else {
+                        fill.style.width = '';
+                        bar.removeAttribute('aria-valuenow');
+                        label.textContent = 'Starting…';
+                    }
+                }
+
+                // Log: opens by itself while running and follows new output.
+                const log = row.querySelector('[data-task-log]');
+                const output = row.querySelector('[data-task-output]');
+                const atBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 24;
+                log.hidden = !status.output;
+                output.textContent = status.output;
+                if (running && previous !== 'running') log.open = true;
+                if (atBottom || running) output.scrollTop = output.scrollHeight;
+
+                row.querySelector('[data-task-run-form]').hidden = running;
+                row.querySelector('[data-task-cancel-form]').hidden = !running;
+                row.querySelector('[data-task-cancel]').disabled = false;
+                document.querySelectorAll('[data-fix-task="' + row.dataset.task + '"]').forEach((b) => { b.disabled = running; });
+
+                if (previous === 'running' && !running) {
+                    const name = row.dataset.taskLabel;
+                    if (status.state === 'success') showToast('success', name + ' finished.');
+                    else if (status.state === 'failed') showToast('error', name + ' failed. See the log.');
+                    refreshHealth();
+                }
+            };
+
+            // Health counts change when a task finishes.
+            const refreshHealth = async () => {
+                try {
+                    const response = await fetch('{{ path('admin_tools_health') }}', { headers: { Accept: 'application/json' } });
+                    if (!response.ok) return;
+                    const html = await response.json();
+                    Object.entries(html).forEach(([key, markup]) => {
+                        const target = document.querySelector('[data-health="' + key + '"]');
+                        if (target) target.innerHTML = markup;
+                    });
+                    // Keep fix buttons disabled for tasks that are still running.
+                    rows.forEach((row) => {
+                        const running = row.dataset.state === 'running';
+                        document.querySelectorAll('[data-fix-task="' + row.dataset.task + '"]').forEach((b) => { b.disabled = running; });
+                    });
+                } catch (e) { /* keep the old counts */ }
+            };
+
+            // Cancelling waits up to 2 s for the process to stop.
+            document.querySelectorAll('[data-task-cancel-form]').forEach((form) => {
+                form.addEventListener('submit', () => {
+                    const button = form.querySelector('[data-task-cancel]');
+                    button.disabled = true;
+                    button.lastChild.textContent = ' Cancelling…';
+                });
+            });
+
+            rows.forEach((row) => {
+                render(row, JSON.parse(row.dataset.status));
                 // Poll while running.
                 const poll = async () => {
-                    if (card.dataset.state !== 'running') return;
+                    if (row.dataset.state !== 'running') return;
                     try {
-                        const response = await fetch(card.dataset.statusUrl, { headers: { Accept: 'application/json' } });
-                        if (response.ok) render(card, await response.json());
+                        const response = await fetch(row.dataset.statusUrl, { headers: { Accept: 'application/json' } });
+                        if (response.ok) render(row, await response.json());
                     } catch (e) { /* network hiccup: try again next tick */ }
-                    setTimeout(poll, 3000);
+                    setTimeout(poll, 1500);
                 };
-                setTimeout(poll, 3000);
+                setTimeout(poll, 1500);
             });
+
+            // Tick the running timers every second and "x min ago" every minute.
+            let ticks = 0;
+            setInterval(() => {
+                ticks++;
+                rows.forEach((row) => {
+                    if (row.dataset.state === 'running' || ticks % 60 === 0) renderTime(row);
+                });
+            }, 1000);
         })();
     </script>
 {% endblock %}

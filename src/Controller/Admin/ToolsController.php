@@ -2,10 +2,12 @@
 
 namespace App\Controller\Admin;
 
+use App\Admin\CollectableRegistry;
 use App\Entity\Minifigure;
 use App\Entity\Pokemon;
 use App\Form\Admin\CsvImportFormType;
 use App\Service\AdminTaskRunner;
+use App\Service\CollectableHealth;
 use App\Service\DatabaseManager;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Reader;
@@ -28,27 +30,33 @@ class ToolsController extends AbstractController
     private DatabaseManager $database_manager;
     private AdminTaskRunner $task_runner;
     private FormFactoryInterface $form_factory;
+    private CollectableRegistry $registry;
+    private CollectableHealth $health;
     private string $project_dir;
 
-    public function __construct(EntityManagerInterface $entity_manager, DatabaseManager $database_manager, AdminTaskRunner $task_runner, FormFactoryInterface $form_factory, KernelInterface $kernel)
+    public function __construct(EntityManagerInterface $entity_manager, DatabaseManager $database_manager, AdminTaskRunner $task_runner, FormFactoryInterface $form_factory, CollectableRegistry $registry, CollectableHealth $health, KernelInterface $kernel)
     {
         $this->entity_manager = $entity_manager;
         $this->database_manager = $database_manager;
         $this->task_runner = $task_runner;
         $this->form_factory = $form_factory;
+        $this->registry = $registry;
+        $this->health = $health;
         $this->project_dir = $kernel->getProjectDir();
     }
 
     /**
      * The CSV imports on the tools page. Each one moves the upload to var/<file>,
      * where the DatabaseManager import (and the matching console command) reads it.
-     * @return array<string, array{title: string, columns: string[], optional_columns: string[], file: string, replace_label: string, replace_text: string}>
+     * collectable: CollectableType key of the Tools section the import is shown in.
+     * @return array<string, array{collectable: string, title: string, columns: string[], optional_columns: string[], file: string, replace_label: string, replace_text: string}>
      */
     private static function getImports(): array
     {
         return [
             'cards' => [
-                'title' => 'Import cards CSV',
+                'collectable' => 'pokemon',
+                'title' => 'Import CSV',
                 'columns' => DatabaseManager::CARDS_CSV_COLUMNS,
                 'optional_columns' => [],
                 'file' => 'cards.csv',
@@ -56,7 +64,8 @@ class ToolsController extends AbstractController
                 'replace_text' => 'Every Pokémon card in your collection is deleted and replaced by the cards in this CSV. Images on disk are kept.',
             ],
             'minifigures' => [
-                'title' => 'Import minifigures CSV',
+                'collectable' => 'lego',
+                'title' => 'Import CSV',
                 'columns' => DatabaseManager::MINIFIGURES_CSV_COLUMNS,
                 'optional_columns' => ['Url'],
                 'file' => 'minifigures.csv',
@@ -101,11 +110,64 @@ class ToolsController extends AbstractController
             $tasks[] = $task + ['key' => $key, 'status' => $this->task_runner->getStatus($key)];
         }
 
+        // One section per collectable, in sidebar order, with its imports and tasks.
+        $sections = [];
+        foreach ($this->registry->all() as $collectable)
+        {
+            $key = $collectable->getKey();
+            $sections[] = [
+                'collectable' => $collectable,
+                'health' => $this->health->get($collectable),
+                'fix_tasks' => self::getFixTasks($key),
+                'imports' => array_values(array_filter($imports, fn (array $import) => $import['collectable'] === $key)),
+                'tasks' => array_values(array_filter($tasks, fn (array $task) => $task['collectable'] === $key)),
+            ];
+        }
+
         return $this->render('admin/tools.html.twig', [
-            'imports' => $imports,
-            'tasks' => $tasks,
+            'sections' => $sections,
             'active_key' => 'tools',
         ], $submitted ? new Response(status: 422) : null);
+    }
+
+    /**
+     * Health summary HTML per collectable key, so the Tools page can refresh
+     * it after a task finishes without duplicating the markup in JS.
+     */
+    #[Route(path: '/admin/tools/health', name: 'admin_tools_health', methods: ['GET'], priority: 11)]
+    public function health(): JsonResponse
+    {
+        $html = [];
+        foreach ($this->registry->all() as $collectable)
+        {
+            $html[$collectable->getKey()] = $this->renderView('admin/tools/_health.html.twig', [
+                'collectable' => $collectable,
+                'health' => $this->health->get($collectable),
+                'fix_tasks' => self::getFixTasks($collectable->getKey()),
+            ]);
+        }
+
+        return new JsonResponse($html);
+    }
+
+    /**
+     * Which task fixes each health issue of a collectable ("missing_images" => "card_images").
+     * @return array<string, string>
+     */
+    private static function getFixTasks(string $collectable): array
+    {
+        $fix_tasks = [];
+        foreach (AdminTaskRunner::getTasks() as $key => $task)
+        {
+            if ($task['collectable'] === $collectable)
+            {
+                foreach ($task['fixes'] as $issue)
+                {
+                    $fix_tasks[$issue] ??= $key;
+                }
+            }
+        }
+        return $fix_tasks;
     }
 
     #[Route(path: '/admin/tools/{task}/run', name: 'admin_tools_run', requirements: ['task' => '[a-z_]+'], methods: ['POST'], priority: 10)]
@@ -124,6 +186,27 @@ class ToolsController extends AbstractController
         else
         {
             $this->addFlash('warning', sprintf('"%s" is already running.', $definition['label']));
+        }
+
+        return $this->redirectToRoute('admin_tools');
+    }
+
+    #[Route(path: '/admin/tools/{task}/cancel', name: 'admin_tools_cancel', requirements: ['task' => '[a-z_]+'], methods: ['POST'], priority: 10)]
+    public function cancel(Request $request, string $task): Response
+    {
+        $definition = AdminTaskRunner::getTasks()[$task] ?? throw $this->createNotFoundException();
+
+        if (!$this->isCsrfTokenValid('cancel-'.$task, $request->request->getString('_token')))
+        {
+            $this->addFlash('error', 'Your session expired, please try again.');
+        }
+        elseif ($this->task_runner->cancel($task))
+        {
+            $this->addFlash('success', sprintf('Cancelled "%s". What it finished before stopping is kept.', $definition['label']));
+        }
+        else
+        {
+            $this->addFlash('warning', sprintf('"%s" was not running anymore.', $definition['label']));
         }
 
         return $this->redirectToRoute('admin_tools');

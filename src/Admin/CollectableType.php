@@ -33,6 +33,16 @@ interface CollectableType
     /** Inner markup of a 24x24 outline SVG icon */
     public function getIcon(): string;
 
+    /** Hex color that sets this collectable apart in the admin, e.g. on the Tools page */
+    public function getAccentColor(): string;
+
+    /**
+     * Type-specific counts for the Tools health summary, next to the generic
+     * image checks. "filter" holds admin list filters that show those items.
+     * @return list<array{label: string, count: int, filter: array<string, string>}>
+     */
+    public function getHealthChecks(): array;
+
     public function getEntityClass(): string;
 
     public function getFormType(): string;

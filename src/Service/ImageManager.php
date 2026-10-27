@@ -32,7 +32,7 @@ class ImageManager
      *
      * @return array{added: int, failed: array<string, string>} failed: card => reason
      */
-    public function addImageUrls(): array
+    public function addImageUrls(?callable $progress = null): array
     {
         $cards = $this->entity_manager->getRepository(Pokemon::class)->getBatchOfPokemonWithoutURL();
         $report = ['added' => 0, 'failed' => []];
@@ -40,6 +40,10 @@ class ImageManager
         /** @var Pokemon $pokemon */
         foreach ($cards as $i => $pokemon)
         {
+            if ($progress)
+            {
+                $progress($i + 1, \count($cards), 'Finding image URLs');
+            }
             $label = sprintf('%s (%s %s)', $pokemon->getName(), $pokemon->getSerie(), $pokemon->getSerieNr());
             try
             {
@@ -72,13 +76,18 @@ class ImageManager
      *
      * @return array{downloaded: int, failed: array<string, string>} failed: card => reason
      */
-    public function downloadImages(): array
+    public function downloadImages(?callable $progress = null): array
     {
         $report = ['downloaded' => 0, 'failed' => []];
+        $cards = $this->entity_manager->getRepository(Pokemon::class)->findAll();
 
         /** @var Pokemon $pokemon */
-        foreach ($this->entity_manager->getRepository(Pokemon::class)->findAll() as $pokemon)
+        foreach ($cards as $i => $pokemon)
         {
+            if ($progress)
+            {
+                $progress($i + 1, \count($cards), 'Downloading images');
+            }
             $result = $this->image_storage->downloadMissing($this->card_type, $pokemon);
             if ($result === true)
             {

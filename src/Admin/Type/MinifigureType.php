@@ -44,6 +44,25 @@ class MinifigureType implements CollectableType
         return '<rect x="8" y="2.5" width="8" height="7" rx="2"/><path d="M10.5 2.5v-1h3v1"/><path d="M6 21v-7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v7"/><path d="M12 14v7"/>';
     }
 
+    public function getAccentColor(): string
+    {
+        return '#E0B100'; // pokeyellow-dark: LEGO yellow that stays readable on white
+    }
+
+    public function getHealthChecks(): array
+    {
+        $temporary = (int) $this->entity_manager->getRepository(Minifigure::class)->createQueryBuilder('e')
+            ->select('COUNT(e.id)')
+            ->where('e.identifier LIKE :temp')
+            ->setParameter('temp', Minifigure::TEMPORARY_PREFIX.'%')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return [
+            ['label' => $temporary === 1 ? 'temporary ID' : 'temporary IDs', 'count' => $temporary, 'filter' => ['identifier' => 'temp']],
+        ];
+    }
+
     public function getEntityClass(): string
     {
         return Minifigure::class;

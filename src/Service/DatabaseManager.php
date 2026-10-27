@@ -115,7 +115,7 @@ class DatabaseManager
      * checked first so unknown identifiers don't get a broken link.
      * Returns a report keyed by outcome.
      */
-    public function fillMinifigureImageUrls(): array
+    public function fillMinifigureImageUrls(?callable $progress = null): array
     {
         $report = ['updated' => [], 'failed' => []];
         $minifigures = $this->entity_manager->getRepository(Minifigure::class)->getMinifiguresWithoutUrl();
@@ -126,7 +126,10 @@ class DatabaseManager
             ],
         ]);
 
-        foreach ($minifigures as $minifigure) {
+        foreach ($minifigures as $i => $minifigure) {
+            if ($progress) {
+                $progress($i + 1, \count($minifigures), 'Checking BrickLink');
+            }
             $url = $minifigure->getBricklinkImageUrl();
             if ($url === null) {
                 continue;
@@ -150,34 +153,49 @@ class DatabaseManager
         return $report;
     }
 
-    public function addMissingPokemon(): array
+    /**
+     * @param callable|null $progress fn(int $current, int $total, string $label), called per card
+     */
+    public function addMissingPokemon(?callable $progress = null): array
     {
-        $added = [];
+        // Collect the cards to look up first, so progress can count per card.
+        $todo = [];
         foreach (PokemonManager::getScarletVioletMainSeries() as $serie_name)
         {
-            $missing_in_serie = $this->pokemon_manager->checkForMissingPokemonInSerie($serie_name);
-            if (!empty($missing_in_serie))
+            foreach ($this->pokemon_manager->checkForMissingPokemonInSerie($serie_name) as $serie_nr)
             {
-                foreach ($missing_in_serie as $serie_nr)
+                if ($this->entity_manager->getRepository(MissingPokemon::class)->findOneBy(['serie' => $serie_name, 'serie_nr' => $serie_nr]) === null)
                 {
-                    if ($this->entity_manager->getRepository(MissingPokemon::class)->findOneBy(['serie' => $serie_name, 'serie_nr' => $serie_nr]) === null)
-                    {
-                        $base_url = "https://www.pokellector.com/";
-                        $url = $base_url . Pokemon::hyphenate($serie_name) . "-Expansion" . "/" . "Card-" . Pokemon::getSerieNrGallery($serie_name, $serie_nr);
-                        $client = HttpClient::create();
-                        $response = $client->request('GET', $url);
-                        $content = $response->getContent();
-                        $crawler = new Crawler($content);
-                        $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
-                        $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
-                        $missing_pokemon = new MissingPokemon($title, $serie_name, $serie_nr, $image_url);
-                        $this->entity_manager->persist($missing_pokemon);
-                        $added[$serie_name][] = $missing_pokemon->getTitle();
-                    }
+                    $todo[] = [$serie_name, $serie_nr];
                 }
+            }
+        }
+
+        $added = [];
+        $client = HttpClient::create(['timeout' => 15, 'max_duration' => 30]);
+        foreach ($todo as $i => [$serie_name, $serie_nr])
+        {
+            if ($progress)
+            {
+                $progress($i + 1, \count($todo), 'Looking up '.$serie_name);
+            }
+            $base_url = "https://www.pokellector.com/";
+            $url = $base_url . Pokemon::hyphenate($serie_name) . "-Expansion" . "/" . "Card-" . Pokemon::getSerieNrGallery($serie_name, $serie_nr);
+            $response = $client->request('GET', $url);
+            $content = $response->getContent();
+            $crawler = new Crawler($content);
+            $title = $crawler->filterXPath('//meta[@property="og:title"]')->attr('content');
+            $image_url = $crawler->filterXPath('//meta[@property="og:image"]')->attr('content');
+            $missing_pokemon = new MissingPokemon($title, $serie_name, $serie_nr, $image_url);
+            $this->entity_manager->persist($missing_pokemon);
+            $added[$serie_name][] = $missing_pokemon->getTitle();
+            // Save regularly, so a cancelled or failed run keeps what it found.
+            if (($i + 1) % 10 === 0)
+            {
                 $this->entity_manager->flush();
             }
         }
+        $this->entity_manager->flush();
 
         return $added;
     }

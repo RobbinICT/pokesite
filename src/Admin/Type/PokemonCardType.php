@@ -44,6 +44,16 @@ class PokemonCardType implements CollectableType
         return '<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="12" r="3.5"/><path d="M8.5 12h7"/>';
     }
 
+    public function getAccentColor(): string
+    {
+        return '#3B4CCA'; // pokeblue
+    }
+
+    public function getHealthChecks(): array
+    {
+        return [];
+    }
+
     public function getEntityClass(): string
     {
         return Pokemon::class;

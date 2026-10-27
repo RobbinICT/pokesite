@@ -1,0 +1,47 @@
+{#
+    Tools for one collectable: header with health summary, its imports and its tasks.
+    Params: section {collectable, health, fix_tasks, imports, tasks}, state_labels
+#}
+{% set collectable = section.collectable %}
+<section class="tool-section" style="--accent: {{ collectable.accentColor }}" aria-labelledby="tools-{{ collectable.key }}">
+    <header class="tool-section__header">
+        <span class="tool-section__icon">
+            <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{{ collectable.icon|raw }}</svg>
+        </span>
+        <div class="min-w-0 flex-1">
+            <h2 id="tools-{{ collectable.key }}" class="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">{{ collectable.label }}</h2>
+            <div class="mt-1.5 flex flex-wrap items-center gap-1.5" data-health="{{ collectable.key }}">
+                {% include 'admin/tools/_health.html.twig' with { collectable: collectable, health: section.health, fix_tasks: section.fix_tasks } only %}
+            </div>
+        </div>
+        <a href="{{ path('admin_list', { type: collectable.key }) }}" class="btn btn--ghost hidden sm:inline-flex">
+            Manage
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </a>
+    </header>
+
+    {% if section.imports or section.tasks %}
+        <div class="grid items-start gap-4 p-4 sm:p-5 {{ section.imports and section.tasks ? 'xl:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]' }}">
+            {% if section.imports %}
+                <div class="grid gap-4">
+                    {% for import in section.imports %}
+                        {% include 'admin/tools/_import.html.twig' with { import: import } only %}
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            {% if section.tasks %}
+                <div class="admin-panel shadow-none">
+                    <h3 class="px-4 pt-4 text-sm font-bold sm:px-5">Tasks</h3>
+                    <ul class="divide-y divide-gray-100 dark:divide-gray-800">
+                        {% for task in section.tasks %}
+                            {% include 'admin/tools/_task.html.twig' with { task: task, state_labels: state_labels } only %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p class="px-5 py-4 text-sm text-gray-500 dark:text-gray-400">No imports or tasks for {{ collectable.label }} yet.</p>
+    {% endif %}
+</section>

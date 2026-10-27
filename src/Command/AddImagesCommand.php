@@ -13,6 +13,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class AddImagesCommand extends Command
 {
+    use ReportsProgress;
+
     private ImageManager $image_manager;
 
     public function __construct(ImageManager $image_manager)
@@ -35,7 +37,8 @@ class AddImagesCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->note('Looking up image URLs on Pokéllector for cards without one');
-        $report = $this->image_manager->addImageUrls();
+        $progress = $this->progressReporter($output);
+        $report = $this->image_manager->addImageUrls($progress);
         $io->writeln(sprintf('Added %d image URL(s)', $report['added']));
         foreach ($report['failed'] as $card => $reason)
         {
@@ -43,7 +46,7 @@ class AddImagesCommand extends Command
         }
 
         $io->note('Downloading card images that are not on the server yet');
-        $report = $this->image_manager->downloadImages();
+        $report = $this->image_manager->downloadImages($progress);
         $io->writeln(sprintf('Downloaded %d card image(s)', $report['downloaded']));
         foreach ($report['failed'] as $card => $reason)
         {

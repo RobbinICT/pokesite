@@ -21,6 +21,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class UpdateMinifiguresCommand extends Command
 {
+    use ReportsProgress;
+
     private EntityManagerInterface $entity_manager;
     private DatabaseManager $database_manager;
 
@@ -80,8 +82,11 @@ class UpdateMinifiguresCommand extends Command
                 $io->note('Downloading minifigure images that are not on the server yet');
                 $downloaded = 0;
                 $failed = [];
-                foreach ($this->entity_manager->getRepository(Minifigure::class)->findAll() as $minifigure)
+                $progress = $this->progressReporter($output);
+                $minifigures = $this->entity_manager->getRepository(Minifigure::class)->findAll();
+                foreach ($minifigures as $i => $minifigure)
                 {
+                    $progress($i + 1, \count($minifigures), 'Downloading images');
                     $result = $this->image_storage->downloadMissing($this->minifigure_type, $minifigure);
                     if ($result === true)
                     {
@@ -103,7 +108,7 @@ class UpdateMinifiguresCommand extends Command
             case 'fill-images':
             case 'scrape-images': // old name
                 $io->note('Filling in missing minifigure image URLs from BrickLink');
-                $report = $this->database_manager->fillMinifigureImageUrls();
+                $report = $this->database_manager->fillMinifigureImageUrls($this->progressReporter($output));
                 $io->success(sprintf('Updated %d image(s)', \count($report['updated'])));
                 if (!empty($report['failed']))
                 {

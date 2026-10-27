@@ -1,0 +1,56 @@
+{#
+    Health summary of one collectable: counts that link to the filtered admin
+    list, with a button that runs the task fixing the issue.
+    Also rendered on its own by ToolsController::health() to refresh after a task.
+    Params: collectable, health {total, missing_images, no_url, checks}, fix_tasks {issue: task key}
+#}
+{% set list_url = path('admin_list', { type: collectable.key }) %}
+
+{% macro fix_button(task, label) %}
+    {% if task %}
+        <form method="post" action="{{ path('admin_tools_run', { task: task }) }}" class="contents">
+            <input type="hidden" name="_token" value="{{ csrf_token('run-' ~ task) }}">
+            <button type="submit" class="health-fix" data-fix-task="{{ task }}">{{ label }}</button>
+        </form>
+    {% endif %}
+{% endmacro %}
+
+<a href="{{ list_url }}" class="health-chip">
+    <span class="tabular-nums">{{ health.total|number_format(0, ',', '.') }}</span>
+    {{ health.total == 1 ? collectable.itemLabel : collectable.label }}
+</a>
+
+{% if health.total > 0 %}
+    {% if health.missing_images > 0 %}
+        <span class="inline-flex items-center gap-1">
+            <a href="{{ path('admin_list', { type: collectable.key, f: { image: 'missing' } }) }}" class="health-chip health-chip--warn">
+                <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 8v5M12 17h.01"/><path d="M10.3 3.9 2.4 18a2 2 0 0 0 1.7 3h15.8a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                <span class="tabular-nums">{{ health.missing_images }}</span> not on server
+            </a>
+            {{ _self.fix_button(fix_tasks.missing_images ?? null, 'Download') }}
+        </span>
+    {% else %}
+        <span class="health-chip health-chip--ok">
+            <svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5L20 7"/></svg>
+            All images on server
+        </span>
+    {% endif %}
+
+    {% if health.no_url > 0 %}
+        <span class="inline-flex items-center gap-1">
+            <a href="{{ path('admin_list', { type: collectable.key, f: { image: 'no_url' } }) }}" class="health-chip health-chip--warn">
+                <span class="tabular-nums">{{ health.no_url }}</span> without image URL
+            </a>
+            {{ _self.fix_button(fix_tasks.no_url ?? null, 'Find URLs') }}
+        </span>
+    {% endif %}
+{% endif %}
+
+{% for check in health.checks %}
+    {% if check.count > 0 %}
+        <a href="{{ path('admin_list', { type: collectable.key, f: check.filter }) }}" class="health-chip">
+            <span class="tabular-nums">{{ check.count }}</span> {{ check.label }}
+            <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+        </a>
+    {% endif %}
+{% endfor %}
