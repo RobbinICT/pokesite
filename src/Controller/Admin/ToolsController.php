@@ -8,15 +8,18 @@ use App\Entity\Pokemon;
 use App\Form\Admin\CsvImportFormType;
 use App\Service\AdminTaskRunner;
 use App\Service\CollectableHealth;
+use App\Service\DatabaseBackup;
 use App\Service\DatabaseManager;
 use Doctrine\ORM\EntityManagerInterface;
 use League\Csv\Reader;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Form\FormFactoryInterface;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpKernel\KernelInterface;
 use Symfony\Component\Routing\Attribute\Route;
 
@@ -32,9 +35,10 @@ class ToolsController extends AbstractController
     private FormFactoryInterface $form_factory;
     private CollectableRegistry $registry;
     private CollectableHealth $health;
+    private DatabaseBackup $backup;
     private string $project_dir;
 
-    public function __construct(EntityManagerInterface $entity_manager, DatabaseManager $database_manager, AdminTaskRunner $task_runner, FormFactoryInterface $form_factory, CollectableRegistry $registry, CollectableHealth $health, KernelInterface $kernel)
+    public function __construct(EntityManagerInterface $entity_manager, DatabaseManager $database_manager, AdminTaskRunner $task_runner, FormFactoryInterface $form_factory, CollectableRegistry $registry, CollectableHealth $health, DatabaseBackup $backup, KernelInterface $kernel)
     {
         $this->entity_manager = $entity_manager;
         $this->database_manager = $database_manager;
@@ -42,6 +46,7 @@ class ToolsController extends AbstractController
         $this->form_factory = $form_factory;
         $this->registry = $registry;
         $this->health = $health;
+        $this->backup = $backup;
         $this->project_dir = $kernel->getProjectDir();
     }
 
@@ -126,6 +131,7 @@ class ToolsController extends AbstractController
 
         return $this->render('admin/tools.html.twig', [
             'sections' => $sections,
+            'backup' => $this->backup->getInfo(),
             'active_key' => 'tools',
         ], $submitted ? new Response(status: 422) : null);
     }
@@ -148,6 +154,33 @@ class ToolsController extends AbstractController
         }
 
         return new JsonResponse($html);
+    }
+
+    #[Route(path: '/admin/tools/backup', name: 'admin_tools_backup', methods: ['POST'], priority: 11)]
+    public function backup(Request $request): Response
+    {
+        if (!$this->isCsrfTokenValid('backup', $request->request->getString('_token')))
+        {
+            $this->addFlash('error', 'Your session expired, please try again.');
+            return $this->redirectToRoute('admin_tools');
+        }
+
+        try
+        {
+            $path = $this->backup->create();
+        }
+        catch (\Throwable $e)
+        {
+            $this->addFlash('error', 'The backup could not be made: '.$e->getMessage());
+            return $this->redirectToRoute('admin_tools');
+        }
+
+        $response = new BinaryFileResponse($path);
+        $response->setContentDisposition(ResponseHeaderBag::DISPOSITION_ATTACHMENT, sprintf('pokesite-backup-%s.sqlite', date('Y-m-d-Hi')));
+        $response->headers->set('Content-Type', 'application/vnd.sqlite3');
+        $response->deleteFileAfterSend();
+
+        return $response;
     }
 
     /**
