@@ -27,6 +27,10 @@ class Minifigure
     #[ORM\Column(nullable: true)]
     public ?string $url = null;
 
+    /** On the wishlist: not in the collection yet. */
+    #[ORM\Column(options: ['default' => false])]
+    public bool $wanted = false;
+
     public function __construct(string $identifier, string $series, string $name)
     {
         $this->identifier = $identifier;
@@ -113,5 +117,15 @@ class Minifigure
     public function setUrl(?string $url): void
     {
         $this->url = $url;
+    }
+
+    public function isWanted(): bool
+    {
+        return $this->wanted;
+    }
+
+    public function setWanted(bool $wanted): void
+    {
+        $this->wanted = $wanted;
     }
 }

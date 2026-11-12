@@ -2,7 +2,7 @@
 
 {#
     Home dashboard: one tile per collection with its key numbers.
-    Params: config, pokemon_stats {owned, binder, missing, missing_unique}, lego_stats {owned}
+    Params: config, pokemon_stats {owned, binder, missing, missing_unique}, lego_stats {owned, series, wanted}
 #}
 
 {% macro stat(label, value, href, dot_class) %}
@@ -48,6 +48,8 @@
             {{ _self.tile_header('LEGO', '<rect x="8" y="2.5" width="8" height="7" rx="2"/><path d="M10.5 2.5v-1h3v1"/><path d="M6 21v-7a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v7"/><path d="M12 14v7"/>', path('lego_overview')) }}
             <div class="grid grid-cols-2 gap-3">
                 {{ _self.stat('Minifigures', lego_stats.owned, path('lego_overview')) }}
+                {{ _self.stat('Series', lego_stats.series, path('lego_series'), 'bg-pokeyellow') }}
+                {{ _self.stat('Wishlist', lego_stats.wanted, path('lego_wishlist'), 'bg-pokered') }}
             </div>
         </section>
     </div>

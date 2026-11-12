@@ -72,7 +72,7 @@ class ToolsController extends AbstractController
                 'collectable' => 'lego',
                 'title' => 'Import CSV',
                 'columns' => DatabaseManager::MINIFIGURES_CSV_COLUMNS,
-                'optional_columns' => ['Url'],
+                'optional_columns' => ['Url', 'Wishlist'],
                 'file' => 'minifigures.csv',
                 'replace_label' => 'Replace all minifigures',
                 'replace_text' => 'Every minifigure in your collection is deleted and replaced by the minifigures in this CSV. Images on disk are kept.',

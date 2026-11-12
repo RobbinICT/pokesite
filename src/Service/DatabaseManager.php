@@ -100,6 +100,8 @@ class DatabaseManager
             $minifigure = new Minifigure($identifier, trim($row['Series'] ?? ''), $name);
             $url = trim($row['Url'] ?? '');
             $minifigure->setUrl($url !== '' ? $url : $minifigure->getBricklinkImageUrl());
+            // Optional column: anything but empty/"no"/"0" puts the figure on the wishlist.
+            $minifigure->setWanted(!\in_array(strtolower(trim($row['Wishlist'] ?? '')), ['', 'no', 'nee', '0', 'false'], true));
             $this->entity_manager->persist($minifigure);
             $report['imported']++;
         }

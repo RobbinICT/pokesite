@@ -6,15 +6,21 @@ use Doctrine\ORM\EntityRepository;
 
 class MinifigureRepository extends EntityRepository
 {
+    /**
+     * @param bool $wanted false: the collection, true: the wishlist
+     */
     public function getMinifigures(
         ?string $search_term = null,
         ?int $offset = null,
-        ?int $limit = null
+        ?int $limit = null,
+        bool $wanted = false
     ) {
-        $qb = $this->createQueryBuilder('q');
+        $qb = $this->createQueryBuilder('q')
+            ->where('q.wanted = :wanted')
+            ->setParameter('wanted', $wanted);
 
         if ($search_term) {
-            $qb->where('LOWER(q.name) LIKE LOWER(:search) OR LOWER(q.identifier) LIKE LOWER(:search)')
+            $qb->andWhere('LOWER(q.name) LIKE LOWER(:search) OR LOWER(q.identifier) LIKE LOWER(:search) OR LOWER(q.series) LIKE LOWER(:search)')
                 ->setParameter('search', '%'.$search_term.'%');
         }
 
@@ -32,6 +38,33 @@ class MinifigureRepository extends EntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /** @param bool $wanted false: the collection, true: the wishlist */
+    public function countMinifigures(bool $wanted = false): int
+    {
+        return $this->count(['wanted' => $wanted]);
+    }
+
+    /**
+     * Number of owned and wanted figures per series, in series order.
+     * @return array<string, array{owned: int, wanted: int}>
+     */
+    public function getSeriesCounts(): array
+    {
+        $rows = $this->createQueryBuilder('q')
+            ->select('q.series AS series, q.wanted AS wanted, COUNT(q.id) AS amount')
+            ->groupBy('q.series, q.wanted')
+            ->orderBy('q.series', 'ASC')
+            ->getQuery()
+            ->getScalarResult();
+
+        $counts = [];
+        foreach ($rows as $row) {
+            $counts[$row['series']] ??= ['owned' => 0, 'wanted' => 0];
+            $counts[$row['series']][$row['wanted'] ? 'wanted' : 'owned'] = (int) $row['amount'];
+        }
+        return $counts;
     }
 
     public function getMinifiguresWithoutUrl(?int $limit = null)

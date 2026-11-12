@@ -1,0 +1,35 @@
+{#
+    Minifigures grouped by series: a row of chips to jump to a series, then one
+    grid with a header per series.
+    Params: config, groups (series => list of Minifigure), mark_wanted (bool): fade
+    wishlist figures and count them separately
+#}
+<nav class="mb-5 flex flex-wrap gap-2" aria-label="Jump to series">
+    {% for series, minifigures in groups %}
+        {% set owned = minifigures|filter(m => not m.wanted)|length %}
+        <a href="#series-{{ loop.index }}" class="series-chip">
+            {{ series }}
+            <span class="series-chip__count">{{ mark_wanted ? owned : minifigures|length }}</span>
+        </a>
+    {% endfor %}
+</nav>
+
+<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
+    {% for series, minifigures in groups %}
+        {% set wanted = minifigures|filter(m => m.wanted)|length %}
+        <div class="serie-header scroll-mt-20" id="series-{{ loop.index }}">
+            <span class="serie-header__label">{{ series }}</span>
+            <span class="serie-header__count">
+                {% if mark_wanted %}
+                    {{ minifigures|length - wanted }} owned{% if wanted %} · {{ wanted }} on wishlist{% endif %}
+                {% else %}
+                    {{ minifigures|length }}
+                {% endif %}
+            </span>
+            <span class="serie-header__rule"></span>
+        </div>
+        {% for m in minifigures %}
+            {% include 'lego/_card.html.twig' with { config: config, m: m, mark_wanted: mark_wanted } only %}
+        {% endfor %}
+    {% endfor %}
+</div>

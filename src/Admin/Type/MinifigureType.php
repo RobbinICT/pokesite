@@ -85,6 +85,7 @@ class MinifigureType implements CollectableType
         return [
             'series' => ['label' => 'Series', 'choices' => array_combine($series, $series)],
             'identifier' => ['label' => 'Identifier', 'choices' => ['temp' => 'Temporary', 'bricklink' => 'BrickLink']],
+            'status' => ['label' => 'Status', 'choices' => [MinifigureFormType::STATUS_OWNED => 'In collection', MinifigureFormType::STATUS_WANTED => 'On wishlist']],
         ];
     }
 
@@ -94,18 +95,19 @@ class MinifigureType implements CollectableType
             'series' => $qb->andWhere('e.series = :f_series')->setParameter('f_series', $value),
             'identifier' => $qb->andWhere($value === 'temp' ? 'e.identifier LIKE :f_temp' : 'e.identifier NOT LIKE :f_temp')
                 ->setParameter('f_temp', Minifigure::TEMPORARY_PREFIX.'%'),
+            'status' => $qb->andWhere('e.wanted = :f_wanted')->setParameter('f_wanted', $value === MinifigureFormType::STATUS_WANTED),
         };
     }
 
     public function getCsvColumns(): array
     {
-        return [...DatabaseManager::MINIFIGURES_CSV_COLUMNS, 'Url'];
+        return [...DatabaseManager::MINIFIGURES_CSV_COLUMNS, 'Url', 'Wishlist'];
     }
 
     /** @param Minifigure $item */
     public function toCsvRow(object $item): array
     {
-        return [$item->getIdentifier(), $item->getSeries(), $item->getName(), $item->getUrl()];
+        return [$item->getIdentifier(), $item->getSeries(), $item->getName(), $item->getUrl(), $item->isWanted() ? 'yes' : ''];
     }
 
     public function getColumns(): array
@@ -153,7 +155,8 @@ class MinifigureType implements CollectableType
     /** @param Minifigure $item */
     public function getBadge(object $item): ?string
     {
-        return $item->isTemporary() ? 'Temporary ID' : null;
+        $badges = array_filter([$item->isWanted() ? 'Wishlist' : null, $item->isTemporary() ? 'Temporary ID' : null]);
+        return $badges ? implode(' · ', $badges) : null;
     }
 
     /** @param Minifigure|null $item */
@@ -169,6 +172,7 @@ class MinifigureType implements CollectableType
             'url' => $item->getUrl(),
             'series' => $item->getSeries(),
             'identifier' => $item->getIdentifier(),
+            'status' => $item->isWanted() ? MinifigureFormType::STATUS_WANTED : MinifigureFormType::STATUS_OWNED,
         ];
     }
 
@@ -185,6 +189,7 @@ class MinifigureType implements CollectableType
             $item->setSeries($data['series']);
             $item->setName($data['name']);
         }
+        $item->setWanted(($data['status'] ?? null) === MinifigureFormType::STATUS_WANTED);
         // No URL given: fall back to BrickLink's catalog image for real IDs.
         $item->setUrl($data['url'] ?: $item->getBricklinkImageUrl());
 
@@ -217,7 +222,7 @@ class MinifigureType implements CollectableType
 
     public function getAddAnotherFields(): array
     {
-        return ['series'];
+        return ['series', 'status'];
     }
 
     /** @param Minifigure $item */

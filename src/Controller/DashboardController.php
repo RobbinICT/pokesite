@@ -26,6 +26,7 @@ class DashboardController extends AbstractController
         /** @var Config $config */
         $config = $this->entity_manager->getRepository(Config::class)->getConfig();
         $pokemon_repository = $this->entity_manager->getRepository(Pokemon::class);
+        $lego_repository = $this->entity_manager->getRepository(Minifigure::class);
 
         return $this->render('dashboard.html.twig', [
             'config' => $config,
@@ -36,7 +37,9 @@ class DashboardController extends AbstractController
                 'missing_unique' => MissingPokemonController::countMissingUnique(),
             ],
             'lego_stats' => [
-                'owned' => $this->entity_manager->getRepository(Minifigure::class)->count([]),
+                'owned' => $lego_repository->countMinifigures(),
+                'series' => \count(array_filter($lego_repository->getSeriesCounts(), fn (array $counts) => $counts['owned'] > 0)),
+                'wanted' => $lego_repository->countMinifigures(true),
             ],
         ]);
     }

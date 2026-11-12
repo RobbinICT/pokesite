@@ -4,6 +4,7 @@ namespace App\Form\Admin;
 
 use App\Entity\Minifigure;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\UrlType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -12,6 +13,9 @@ use Symfony\Component\Validator\Constraints as Assert;
 
 class MinifigureFormType extends AbstractType
 {
+    public const STATUS_OWNED = 'owned';
+    public const STATUS_WANTED = 'wanted';
+
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
@@ -54,6 +58,11 @@ class MinifigureFormType extends AbstractType
                         message: 'Use only letters, numbers, dots, dashes and underscores.',
                     ),
                 ],
+            ])
+            ->add('status', ChoiceType::class, [
+                'label' => 'Status',
+                'choices' => ['In my collection' => self::STATUS_OWNED, 'On my wishlist' => self::STATUS_WANTED],
+                'help' => 'Wishlist figures show on the Wishlist page. Got it? Switch it to "In my collection".',
             ]);
     }
 

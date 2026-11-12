@@ -40,6 +40,8 @@
                 search_label: 'minifigures',
                 items: [
                     { route: 'lego_overview', label: 'Overview' },
+                    { route: 'lego_series',   label: 'Series' },
+                    { route: 'lego_wishlist', label: 'Wishlist' },
                 ],
             },
         ] %}
@@ -50,7 +52,7 @@
         {% endfor %}
 
         {# Search filters the current list; elsewhere it searches all Pokémon. #}
-        {% set list_routes = ['pokemon_overview', 'pokemon_binder', 'pokemon_missing', 'lego_overview'] %}
+        {% set list_routes = ['pokemon_overview', 'pokemon_binder', 'pokemon_missing', 'lego_overview', 'lego_series', 'lego_wishlist'] %}
         {% set search_action = current_route in list_routes ? app.request.pathinfo : path('pokemon_overview') %}
         {% set search_label = current_route in list_routes ? current_section.search_label : 'Pokémon' %}
 
