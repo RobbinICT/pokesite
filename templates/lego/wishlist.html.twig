@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{#
+    Minifigures you want but don't have yet, grouped by series. Maintained by
+    hand in the admin (status "On wishlist").
+    Params: config, groups (series => list of Minifigure), search_string
+#}
+
+{% block body %}
+    {% set total = groups|reduce((carry, minifigures) => carry + minifigures|length, 0) %}
+
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+        <span class="stat-pill">
+            <span class="h-2 w-2 rounded-full bg-pokered"></span>
+            On wishlist: {{ total }}
+        </span>
+        {% if search_string is not empty %}
+            <span class="text-sm text-gray-500 dark:text-gray-400">
+                Results for <span class="font-semibold text-gray-800 dark:text-gray-200">"{{ search_string }}"</span>
+            </span>
+        {% endif %}
+        {% if is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('admin_new', { type: 'lego', prefill: { status: 'wanted' } }) }}" class="ml-auto text-sm font-semibold text-pokeblue hover:underline dark:text-blue-400">+ Add to wishlist</a>
+        {% endif %}
+    </div>
+
+    {% if groups is empty %}
+        <div class="flex flex-col items-center justify-center py-24 text-center">
+            <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300">
+                {% if search_string is not empty %}No wishlist figures found{% else %}Your wishlist is empty{% endif %}
+            </h2>
+            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {% if search_string is not empty %}Try a different search term.{% else %}Add a minifigure in the admin and set its status to "On wishlist".{% endif %}
+            </p>
+        </div>
+    {% else %}
+        {% include 'lego/_groups.html.twig' with { config: config, groups: groups, mark_wanted: false } only %}
+    {% endif %}
+
+    {% embed '_components/back_to_top_button.html.twig' %}{% endembed %}
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% embed '_components/lazy_loading_js.html.twig' %}{% endembed %}
+{% endblock %}

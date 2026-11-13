@@ -8,16 +8,22 @@
       subtitle  (string, optional)  secondary line (e.g. "Base Set #4")
       serie     (string, optional)  serie name, exposed as data-serie for grouping
       target    (string, optional)  link target attribute (e.g. "_blank")
+      img_class (string, optional)  extra class(es) on the image (e.g. portrait variant)
+      badge     (string, optional)  small label on the image (e.g. "Wishlist")
+      muted     (bool, optional)    fade the card (e.g. not owned yet)
 #}
 <a href="{{ href }}"
-   class="pk-card"
+   class="pk-card {{ muted|default(false) ? 'pk-card--muted' }}"
    {% if serie is defined and serie is not null %}data-serie="{{ serie }}"{% endif %}
    {% if target is defined and target %}target="{{ target }}" rel="noopener"{% endif %}>
-    <img class="pk-card__img lazy"
+    <img class="pk-card__img lazy {{ img_class|default('') }}"
          data-src="{{ img_src }}"
          alt="{{ alt }}"
          loading="lazy"
          onerror="this.onerror=null; this.src='/images/placeholder/card_placeholder.png';">
+    {% if badge is defined and badge %}
+        <span class="pk-card__badge">{{ badge }}</span>
+    {% endif %}
     <div class="pk-card__caption">
         <span class="pk-card__title">{{ title }}</span>
         {% if subtitle is defined and subtitle %}

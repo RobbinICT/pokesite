@@ -1,0 +1,331 @@
+{% extends 'admin/layout.html.twig' %}
+
+{#
+    Params: sections (list of {collectable, health, fix_tasks, imports, tasks}, see ToolsController::index())
+#}
+
+{% set state_labels = { idle: 'Never run', running: 'Running', success: 'Done', failed: 'Failed', cancelled: 'Cancelled' } %}
+
+{% block title %}Tools{% endblock %}
+
+{% block body %}
+    <div class="mb-5">
+        <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Tools</h1>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Imports and maintenance jobs per collectable.</p>
+    </div>
+
+    <div class="max-w-6xl space-y-6">
+        {# Database backup: everything lives in one SQLite file #}
+        <section class="tool-section" style="--accent: #64748B" aria-labelledby="tools-backup">
+            <div class="tool-section__header border-b-0">
+                <span class="tool-section__icon">
+                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg>
+                </span>
+                <div class="min-w-0 flex-1">
+                    <h2 id="tools-backup" class="text-lg font-extrabold tracking-tight text-gray-900 dark:text-white">Database backup</h2>
+                    <div class="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        {% if backup.size is not null %}
+                            <span class="health-chip"><span class="tabular-nums">{{ (backup.size / 1024 / 1024)|number_format(1, ',', '.') }} MB</span> database</span>
+                        {% endif %}
+                        {% if backup.last_backup %}
+                            <span class="health-chip {{ backup.stale ? 'health-chip--warn' : 'health-chip--ok' }}">
+                                Last backup <span data-ago="{{ backup.last_backup }}">{{ backup.last_backup|date('d-m-Y H:i') }}</span>
+                            </span>
+                        {% else %}
+                            <span class="health-chip health-chip--warn">No backup downloaded yet</span>
+                        {% endif %}
+                    </div>
+                    <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">All collections, lists and users in one file. Images are not included. To restore, stop the stack and replace <code>var/data.db</code> with the backup.</p>
+                </div>
+                <form method="post" action="{{ path('admin_tools_backup') }}" class="flex-none" data-backup-form>
+                    <input type="hidden" name="_token" value="{{ csrf_token('backup') }}">
+                    <button type="submit" class="btn btn--primary">
+                        <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4-4m4 4 4-4M5 20h14"/></svg>
+                        Download backup
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        {% for section in sections %}
+            {% include 'admin/tools/_section.html.twig' with { section: section, state_labels: state_labels } only %}
+        {% endfor %}
+    </div>
+
+    {# Confirmation before a "replace" import; the text comes from the form submitted #}
+    <dialog id="replace-dialog" class="admin-dialog" aria-labelledby="replace-dialog-title">
+        <div class="p-5">
+            <h2 id="replace-dialog-title" class="text-base font-bold" data-replace-title></h2>
+            <p class="mt-2 text-sm text-gray-600 dark:text-gray-400" data-replace-text></p>
+        </div>
+        <div class="flex justify-end gap-2 rounded-b-2xl border-t border-gray-100 bg-gray-50 px-5 py-3 dark:border-gray-800 dark:bg-gray-950/40">
+            <button type="button" class="btn btn--ghost" data-replace-cancel autofocus>Cancel</button>
+            <button type="button" class="btn btn--danger" data-replace-confirm>Replace everything</button>
+        </div>
+    </dialog>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        (function () {
+            // Confirm a "replace" import before submitting ----------------------
+            const dialog = document.getElementById('replace-dialog');
+            let pending = null;
+            let confirmed = false;
+            document.querySelectorAll('[data-import-form]').forEach((form) => {
+                form.addEventListener('submit', (e) => {
+                    const mode = form.querySelector('select[name$="[mode]"]');
+                    if (mode.value === '{{ constant('App\\Form\\Admin\\CsvImportFormType::MODE_REPLACE') }}' && !confirmed) {
+                        e.preventDefault();
+                        pending = form;
+                        dialog.querySelector('[data-replace-title]').textContent = form.dataset.replaceTitle;
+                        dialog.querySelector('[data-replace-text]').textContent = form.dataset.replaceText;
+                        dialog.showModal();
+                    }
+                });
+            });
+            dialog.querySelector('[data-replace-cancel]').addEventListener('click', () => dialog.close());
+            dialog.querySelector('[data-replace-confirm]').addEventListener('click', () => {
+                confirmed = true;
+                dialog.close();
+                pending.requestSubmit();
+            });
+
+            // Drag & drop CSV upload ------------------------------------------------
+            // Shows the file, its row count and whether the columns match, and
+            // picks the delimiter from the header line.
+            document.querySelectorAll('[data-import-form]').forEach((form) => {
+                const zone = form.querySelector('[data-dropzone]');
+                const input = form.querySelector('[data-dropzone-input]');
+                const delimiter = form.querySelector('select[name$="[delimiter]"]');
+                const columns = JSON.parse(form.dataset.columns);
+
+                const describe = (file) => {
+                    zone.querySelector('[data-dropzone-empty]').hidden = true;
+                    zone.querySelector('[data-dropzone-file]').hidden = false;
+                    zone.querySelector('[data-dropzone-name]').textContent = file.name;
+                    const meta = zone.querySelector('[data-dropzone-meta]');
+                    const check = zone.querySelector('[data-dropzone-check]');
+                    const size = file.size < 1024 * 1024 ? Math.ceil(file.size / 1024) + ' KB' : (file.size / 1024 / 1024).toFixed(1) + ' MB';
+                    meta.textContent = size;
+                    check.textContent = '';
+
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const lines = String(reader.result).replace(/^﻿/, '').split(/\r\n|\n|\r/).filter((line) => line.trim() !== '');
+                        if (!lines.length) {
+                            check.className = 'mt-1 block text-xs font-semibold text-pokered dark:text-red-400';
+                            check.textContent = '✗ The file is empty';
+                            return;
+                        }
+                        // The delimiter that splits the header into the most columns wins.
+                        const header = lines[0];
+                        const best = [';', ',', '\t'].map((d) => [d, header.split(d).length]).sort((a, b) => b[1] - a[1])[0][0];
+                        if (delimiter && [...delimiter.options].some((o) => o.value === best)) delimiter.value = best;
+
+                        const rows = lines.length - 1;
+                        meta.textContent = size + ' · ' + rows + ' row' + (rows === 1 ? '' : 's') + ' · ' + ({ ';': 'semicolons', ',': 'commas', '\t': 'tabs' })[best];
+                        const found = header.split(best).map((c) => c.trim().replace(/^"|"$/g, ''));
+                        const missing = columns.filter((c) => !found.includes(c));
+                        check.className = 'mt-1 block text-xs font-semibold ' + (missing.length ? 'text-pokered dark:text-red-400' : 'text-emerald-600 dark:text-emerald-400');
+                        check.textContent = missing.length ? '✗ Missing column' + (missing.length === 1 ? '' : 's') + ': ' + missing.join(', ') : '✓ All columns present';
+                    };
+                    reader.readAsText(file);
+                };
+
+                input.addEventListener('change', () => { if (input.files.length) describe(input.files[0]); });
+                ['dragenter', 'dragover'].forEach((type) => zone.addEventListener(type, (e) => {
+                    e.preventDefault();
+                    zone.classList.add('dropzone--over');
+                }));
+                ['dragleave', 'drop'].forEach((type) => zone.addEventListener(type, (e) => {
+                    e.preventDefault();
+                    if (type === 'dragleave' && zone.contains(e.relatedTarget)) return;
+                    zone.classList.remove('dropzone--over');
+                }));
+                zone.addEventListener('drop', (e) => {
+                    if (!e.dataTransfer.files.length) return;
+                    input.files = e.dataTransfer.files;
+                    describe(input.files[0]);
+                });
+            });
+            // Dropping a file next to a zone would otherwise open it in the browser.
+            ['dragover', 'drop'].forEach((type) => window.addEventListener(type, (e) => {
+                if (!e.target.closest || !e.target.closest('[data-dropzone]')) e.preventDefault();
+            }));
+
+            // Background tasks -----------------------------------------------------
+            const labels = {{ state_labels|json_encode|raw }};
+            const relative = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' });
+            const fullDate = (ts) => new Date(ts * 1000).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+            const ago = (ts) => {
+                const seconds = Math.round(ts - Date.now() / 1000);
+                const units = [['year', 31536000], ['month', 2592000], ['week', 604800], ['day', 86400], ['hour', 3600], ['minute', 60]];
+                for (const [unit, size] of units) {
+                    if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
+                }
+                return 'just now';
+            };
+            const duration = (s) => {
+                if (s == null) return '';
+                if (s < 60) return s + 's';
+                if (s < 3600) return Math.floor(s / 60) + 'm ' + (s % 60) + 's';
+                return Math.floor(s / 3600) + 'h ' + Math.floor((s % 3600) / 60) + 'm';
+            };
+            const clock = (s) => Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+
+            // Backup: "Last backup 3 days ago". The download keeps you on the page,
+            // so the chip is updated here instead of by a reload.
+            const renderAgo = () => document.querySelectorAll('[data-ago]').forEach((el) => {
+                el.textContent = ago(Number(el.dataset.ago));
+                el.title = fullDate(Number(el.dataset.ago));
+            });
+            renderAgo();
+            document.querySelector('[data-backup-form]').addEventListener('submit', (e) => {
+                const chips = e.target.closest('section').querySelectorAll('.health-chip');
+                const chip = chips[chips.length - 1];
+                chip.className = 'health-chip health-chip--ok';
+                chip.innerHTML = 'Last backup <span></span>';
+                chip.lastElementChild.dataset.ago = Math.floor(Date.now() / 1000);
+                renderAgo();
+            });
+
+            const rows = [...document.querySelectorAll('[data-task]')];
+            const statuses = new Map();
+
+            // Times change without new data ("2 min ago", the running timer).
+            const renderTime = (row) => {
+                const status = statuses.get(row);
+                const time = row.querySelector('[data-task-time]');
+                if (status.state === 'running' && status.started_at) {
+                    time.textContent = 'Running for ' + clock(Math.max(0, Math.round(Date.now() / 1000 - status.started_at)));
+                    time.title = 'Started ' + fullDate(status.started_at);
+                } else if (status.finished_at) {
+                    time.textContent = ({ failed: 'Failed ', cancelled: 'Cancelled ' })[status.state] ?? 'Last run ';
+                    time.textContent += ago(status.finished_at)
+                        + (status.duration != null ? ' · took ' + duration(status.duration) : '');
+                    time.title = fullDate(status.finished_at);
+                } else {
+                    time.textContent = status.state === 'idle' ? 'Never run' : '';
+                    time.removeAttribute('title');
+                }
+            };
+
+            const render = (row, status) => {
+                const previous = row.dataset.state;
+                statuses.set(row, status);
+                row.dataset.state = status.state;
+                const running = status.state === 'running';
+
+                const pill = row.querySelector('[data-task-pill]');
+                pill.className = 'status-pill status-pill--' + status.state;
+                pill.innerHTML = running ? '<span class="spinner h-3 w-3 border"></span><span></span>' : '<span></span>';
+                pill.lastElementChild.textContent = labels[status.state];
+                renderTime(row);
+
+                // History: oldest left, newest right.
+                const history = row.querySelector('[data-task-history]');
+                history.replaceChildren(...(status.history || []).slice().reverse().map((run) => {
+                    const dot = document.createElement('span');
+                    dot.className = 'history-dot history-dot--' + run.state;
+                    dot.title = labels[run.state] + (run.started_at ? ' · ' + fullDate(run.started_at) : '') + (run.duration != null ? ' · ' + duration(run.duration) : '');
+                    return dot;
+                }));
+                history.hidden = (status.history || []).length < 2;
+
+                // Progress: a bar with counts when the command reports them, otherwise an indeterminate bar.
+                const progress = row.querySelector('[data-task-progress]');
+                progress.hidden = !running;
+                if (running) {
+                    const bar = row.querySelector('[data-task-progress-bar]');
+                    const fill = row.querySelector('[data-task-progress-fill]');
+                    const label = row.querySelector('[data-task-progress-label]');
+                    const p = status.progress;
+                    bar.classList.toggle('progress-bar--indeterminate', !p || !p.total);
+                    if (p && p.total) {
+                        const percent = Math.min(100, Math.round(p.current / p.total * 100));
+                        fill.style.width = percent + '%';
+                        bar.setAttribute('aria-valuenow', percent);
+                        label.textContent = p.current + ' / ' + p.total + (p.label ? ' · ' + p.label : '') + ' · ' + percent + '%';
+                    } else {
+                        fill.style.width = '';
+                        bar.removeAttribute('aria-valuenow');
+                        label.textContent = 'Starting…';
+                    }
+                }
+
+                // Log: opens by itself while running and follows new output.
+                const log = row.querySelector('[data-task-log]');
+                const output = row.querySelector('[data-task-output]');
+                const atBottom = output.scrollHeight - output.scrollTop - output.clientHeight < 24;
+                log.hidden = !status.output;
+                output.textContent = status.output;
+                if (running && previous !== 'running') log.open = true;
+                if (atBottom || running) output.scrollTop = output.scrollHeight;
+
+                row.querySelector('[data-task-run-form]').hidden = running;
+                row.querySelector('[data-task-cancel-form]').hidden = !running;
+                row.querySelector('[data-task-cancel]').disabled = false;
+                document.querySelectorAll('[data-fix-task="' + row.dataset.task + '"]').forEach((b) => { b.disabled = running; });
+
+                if (previous === 'running' && !running) {
+                    const name = row.dataset.taskLabel;
+                    if (status.state === 'success') showToast('success', name + ' finished.');
+                    else if (status.state === 'failed') showToast('error', name + ' failed. See the log.');
+                    refreshHealth();
+                }
+            };
+
+            // Health counts change when a task finishes.
+            const refreshHealth = async () => {
+                try {
+                    const response = await fetch('{{ path('admin_tools_health') }}', { headers: { Accept: 'application/json' } });
+                    if (!response.ok) return;
+                    const html = await response.json();
+                    Object.entries(html).forEach(([key, markup]) => {
+                        const target = document.querySelector('[data-health="' + key + '"]');
+                        if (target) target.innerHTML = markup;
+                    });
+                    // Keep fix buttons disabled for tasks that are still running.
+                    rows.forEach((row) => {
+                        const running = row.dataset.state === 'running';
+                        document.querySelectorAll('[data-fix-task="' + row.dataset.task + '"]').forEach((b) => { b.disabled = running; });
+                    });
+                } catch (e) { /* keep the old counts */ }
+            };
+
+            // Cancelling waits up to 2 s for the process to stop.
+            document.querySelectorAll('[data-task-cancel-form]').forEach((form) => {
+                form.addEventListener('submit', () => {
+                    const button = form.querySelector('[data-task-cancel]');
+                    button.disabled = true;
+                    button.lastChild.textContent = ' Cancelling…';
+                });
+            });
+
+            rows.forEach((row) => {
+                render(row, JSON.parse(row.dataset.status));
+                // Poll while running.
+                const poll = async () => {
+                    if (row.dataset.state !== 'running') return;
+                    try {
+                        const response = await fetch(row.dataset.statusUrl, { headers: { Accept: 'application/json' } });
+                        if (response.ok) render(row, await response.json());
+                    } catch (e) { /* network hiccup: try again next tick */ }
+                    setTimeout(poll, 1500);
+                };
+                setTimeout(poll, 1500);
+            });
+
+            // Tick the running timers every second and "x min ago" every minute.
+            let ticks = 0;
+            setInterval(() => {
+                ticks++;
+                if (ticks % 60 === 0) renderAgo();
+                rows.forEach((row) => {
+                    if (row.dataset.state === 'running' || ticks % 60 === 0) renderTime(row);
+                });
+            }, 1000);
+        })();
+    </script>
+{% endblock %}

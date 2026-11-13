@@ -1,0 +1,62 @@
+{#
+    CSV import panel with a drag & drop zone. The zone reads the chosen file in
+    the browser to show its rows, pick the delimiter and check the columns
+    (behaviour in tools.html.twig).
+    Params: import {key, title, columns, optional_columns, replace_label, replace_text, form}
+#}
+{% set import_form = import.form %}
+{% form_theme import_form 'admin/_form_theme.html.twig' %}
+
+<div class="admin-panel shadow-none">
+    {{ form_start(import_form, { attr: {
+        novalidate: 'novalidate',
+        'data-import-form': true,
+        'data-replace-title': import.replace_label ~ '?',
+        'data-replace-text': import.replace_text,
+        'data-columns': import.columns|json_encode,
+    } }) }}
+        <div class="p-4 sm:p-5">
+            <h3 class="text-sm font-bold">{{ import.title }}</h3>
+            <p class="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                Columns: <code class="font-mono">{{ import.columns|join(', ') }}</code>
+                {%- if import.optional_columns %}
+                    <span class="whitespace-nowrap">(optional: <code class="font-mono">{{ import.optional_columns|join(', ') }}</code>)</span>
+                {%- endif %}
+            </p>
+
+            {{ form_errors(import_form) }}
+
+            <label class="dropzone mt-3" data-dropzone>
+                {{ form_widget(import_form.file, { attr: { class: 'sr-only', 'data-dropzone-input': true } }) }}
+                {# Empty state #}
+                <span class="flex flex-col items-center gap-1" data-dropzone-empty>
+                    <svg class="dropzone__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+                    <span><span class="font-semibold text-gray-900 dark:text-white">Drop a CSV here</span> or <span class="dropzone__browse">browse</span></span>
+                    <span class="text-xs text-gray-400">Up to 10 MB</span>
+                </span>
+                {# Chosen file #}
+                <span class="flex w-full items-center gap-3 text-left" data-dropzone-file hidden>
+                    <svg class="dropzone__icon flex-none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>
+                    <span class="min-w-0 flex-1">
+                        <span class="block truncate font-semibold text-gray-900 dark:text-white" data-dropzone-name></span>
+                        <span class="block text-xs text-gray-500 dark:text-gray-400" data-dropzone-meta></span>
+                        <span class="mt-1 block text-xs font-semibold" data-dropzone-check></span>
+                    </span>
+                    <span class="dropzone__browse flex-none text-xs">Change</span>
+                </span>
+            </label>
+            {{ form_errors(import_form.file) }}
+
+            <div class="mt-4 grid gap-x-4 gap-y-4 sm:grid-cols-2">
+                {{ form_row(import_form.mode) }}
+                {{ form_row(import_form.delimiter) }}
+            </div>
+        </div>
+        <div class="flex justify-end rounded-b-xl border-t border-gray-100 bg-gray-50 px-4 py-3 sm:px-5 dark:border-gray-800 dark:bg-gray-950/40">
+            <button type="submit" class="btn btn--primary">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M4 15v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/></svg>
+                Import
+            </button>
+        </div>
+    {{ form_end(import_form) }}
+</div>

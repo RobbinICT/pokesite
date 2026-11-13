@@ -1,0 +1,18 @@
+{#
+    One minifigure card, linking to BrickLink. Wishlist figures are faded with a badge.
+    Params: config, m (Minifigure), mark_wanted (bool, optional): fade wishlist figures
+#}
+{% set img_src = config.getUseLocalMinifigures() == 'true'
+    ? asset('images/lego/' ~ m.identifier|url_encode ~ '.png')
+    : m.url %}
+{% include '_components/card.html.twig' with {
+    href: m.getBricklinkUrl() ?? m.url ?? '#',
+    target: '_blank',
+    img_src: img_src,
+    img_class: 'pk-card__img--figure',
+    alt: m.name,
+    title: m.name,
+    subtitle: m.series ~ ' · ' ~ m.identifier,
+    badge: mark_wanted|default(false) and m.wanted ? 'Wishlist' : null,
+    muted: mark_wanted|default(false) and m.wanted,
+} only %}

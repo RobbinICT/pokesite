@@ -8,7 +8,7 @@
         ? asset('images/pokemon/' ~ p.getUniqueIdentifierV2()|url_encode ~ '.png')
         : p.url %}
     {% include '_components/card.html.twig' with {
-        href: path('show_single_pokemon', { 'id': p.id }),
+        href: path('pokemon_card', { 'id': p.id }),
         img_src: img_src,
         alt: p.name,
         title: p.name,

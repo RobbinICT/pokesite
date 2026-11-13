@@ -1,0 +1,8 @@
+{#
+    Renders one batch of LEGO minifigure cards. Used for both the initial page
+    render and incremental infinite-scroll fetches.
+    Params: config, minifigures (iterable of Minifigure)
+#}
+{% for m in minifigures %}
+    {% include 'lego/_card.html.twig' with { config: config, m: m } only %}
+{% endfor %}

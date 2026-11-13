@@ -9,6 +9,13 @@ set -e
 mkdir -p var/cache var/log
 chown -R www-data:www-data var
 
+# Login, CSRF and remember-me cookies are signed with APP_SECRET, which .env
+# leaves empty. Generate one once into the git-ignored .env.local.
+if [ -z "$APP_SECRET" ] && ! grep -qs '^APP_SECRET=.\+' .env.local; then
+    echo "> Generating APP_SECRET in .env.local..."
+    echo "APP_SECRET=$(php -r 'echo bin2hex(random_bytes(16));')" >> .env.local
+fi
+
 if [ ! -f vendor/autoload_runtime.php ]; then
     echo "> Installing Composer dependencies..."
     composer install --prefer-dist --no-progress --no-interaction

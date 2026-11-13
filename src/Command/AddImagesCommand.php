@@ -13,6 +13,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class AddImagesCommand extends Command
 {
+    use ReportsProgress;
+
     private ImageManager $image_manager;
 
     public function __construct(ImageManager $image_manager)
@@ -34,19 +36,21 @@ class AddImagesCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $io = new SymfonyStyle($input, $output);
-        $io->note('Adding image urls');
-        $added = $this->image_manager->addImageUrls();
-        if ($added > 0)
+        $io->note('Looking up image URLs on Pokéllector for cards without one');
+        $progress = $this->progressReporter($output);
+        $report = $this->image_manager->addImageUrls($progress);
+        $io->writeln(sprintf('Added %d image URL(s)', $report['added']));
+        foreach ($report['failed'] as $card => $reason)
         {
-            $io->success("Added $added image urls");
+            $io->writeln(sprintf('No URL for %s: %s', $card, $reason));
         }
 
-        $io->note('Downloading images');
-        $response = $this->image_manager->downloadImages();
-        if ($response !== null)
+        $io->note('Downloading card images that are not on the server yet');
+        $report = $this->image_manager->downloadImages($progress);
+        $io->writeln(sprintf('Downloaded %d card image(s)', $report['downloaded']));
+        foreach ($report['failed'] as $card => $reason)
         {
-            $io->error('Downloading images failed');
-            $io->error($response);
+            $io->writeln(sprintf('Failed %s: %s', $card, $reason));
         }
 
         $io->note('Downloading missing pokemon images');

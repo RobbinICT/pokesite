@@ -1,0 +1,61 @@
+{% extends 'admin/layout.html.twig' %}
+
+{# Params: settings (list of {key, label, description, value}), csrf_id #}
+
+{% block title %}Settings{% endblock %}
+
+{% block body %}
+    <div class="mb-5">
+        <h1 class="text-2xl font-extrabold tracking-tight text-gray-900 dark:text-white">Settings</h1>
+        <p class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">Changes are saved right away.</p>
+    </div>
+
+    <div class="admin-panel max-w-2xl divide-y divide-gray-100 dark:divide-gray-800" data-settings data-csrf-token="{{ csrf_token(csrf_id) }}">
+        {% for setting in settings %}
+            <div class="flex items-start gap-4 px-5 py-4">
+                <div class="min-w-0 flex-1">
+                    <p id="setting-{{ setting.key }}-label" class="text-sm font-semibold text-gray-900 dark:text-white">{{ setting.label }}</p>
+                    <p id="setting-{{ setting.key }}-description" class="mt-0.5 text-sm text-gray-500 dark:text-gray-400">{{ setting.description }}</p>
+                </div>
+                <button type="button" role="switch" class="switch mt-0.5"
+                        aria-checked="{{ setting.value ? 'true' : 'false' }}"
+                        aria-labelledby="setting-{{ setting.key }}-label"
+                        aria-describedby="setting-{{ setting.key }}-description"
+                        data-setting-url="{{ path('admin_settings_update', { key: setting.key }) }}">
+                    <span class="switch__thumb" aria-hidden="true"></span>
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    <script>
+        (function () {
+            const panel = document.querySelector('[data-settings]');
+            panel.querySelectorAll('[role="switch"]').forEach((toggle) => {
+                toggle.addEventListener('click', async () => {
+                    const value = toggle.getAttribute('aria-checked') !== 'true';
+                    // Flip right away so it feels instant; flip back if saving fails.
+                    toggle.setAttribute('aria-checked', String(value));
+                    toggle.disabled = true;
+                    try {
+                        const response = await fetch(toggle.dataset.settingUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': panel.dataset.csrfToken },
+                            body: JSON.stringify({ value }),
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data.error || 'Saving failed.');
+                        showToast('success', data.message);
+                    } catch (e) {
+                        toggle.setAttribute('aria-checked', String(!value));
+                        showToast('error', e.message || 'Saving failed.');
+                    } finally {
+                        toggle.disabled = false;
+                    }
+                });
+            });
+        })();
+    </script>
+{% endblock %}

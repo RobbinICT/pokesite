@@ -13,6 +13,8 @@ use Symfony\Component\Console\Style\SymfonyStyle;
  */
 class UpdateMissingPokemonCommand extends Command
 {
+    use ReportsProgress;
+
     private DatabaseManager $database_manager;
 
     public function __construct(DatabaseManager $database_manager)
@@ -35,7 +37,7 @@ class UpdateMissingPokemonCommand extends Command
     {
         $io = new SymfonyStyle($input, $output);
         $io->note('Adding missing pokemon');
-        $added = $this->database_manager->addMissingPokemon();
+        $added = $this->database_manager->addMissingPokemon($this->progressReporter($output));
         if (!empty($added))
         {
             $count = \count($added);
